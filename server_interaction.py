@@ -5,7 +5,6 @@ from typing import Optional
 from enum import IntEnum
 
 
-# TODO: add exceptions handling
 # TODO: add logging
 # TODO: add docstrings
 
@@ -22,11 +21,24 @@ class ActionCode(IntEnum):
     SHOOT = 102
 
 
+class ResponseCode(IntEnum):
+    OK = 0
+    BAD_COMMAND = 1
+    ACCESS_DENIED = 2
+    INAPPROPRIATE_GAME_STATE = 3
+    TIMEOUT = 4
+    INTERNAL_SERVER_ERROR = 500
+
+
+class ResponseException(Exception):
+    pass
+
+
 class Session:
     def __init__(self, host: str, port: int):
         self.server_details = (host, port)
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # self.client_socket.setblocking(False)
+        self.client_socket.settimeout(11)
         self.client_socket.connect(self.server_details)
 
     def __del__(self):
@@ -34,47 +46,51 @@ class Session:
 
     def _generate_message(self, code: int, data: Optional[dict] = None):
         if data is None:
-            return struct.pack('<ii', code, 0)
+            return struct.pack("<ii", code, 0)
 
         data_length = len(str(data))
         return struct.pack(
-            f'<ii{data_length}s',
-            code, data_length, json.dumps(data).encode('utf-8')
+            f"<ii{data_length}s", code, data_length, json.dumps(data).encode("utf-8")
         )
 
     def get(self, action: (ActionCode, int), data: Optional[dict] = None) -> dict:
+        """
+
+        :param action:
+        :param data:
+        :return:
+        """
         if isinstance(action, ActionCode):
             action = action.value
 
         message = self._generate_message(action, data)
         self.client_socket.sendall(message)
 
-        response_code = int.from_bytes(
-            self.client_socket.recv(4),
-            'little'
-        )
-        received_data_len = int.from_bytes(
-            self.client_socket.recv(4),
-            'little'
-        )
-        received_data = {} if received_data_len == 0 else json.loads(
-            self.client_socket.recv(received_data_len)
+        response_code = int.from_bytes(self.client_socket.recv(4), "little")
+        received_data_len = int.from_bytes(self.client_socket.recv(4), "little")
+        received_data = (
+            {}
+            if received_data_len == 0
+            else json.loads(self.client_socket.recv(received_data_len))
         )
 
-        result = {
-            'response_code': response_code,
-            'data': received_data,
-        }
-        return result
+        if response_code != ResponseCode.OK:
+            raise ResponseException(
+                f'Error message: {received_data["error_message"]}\n'
+                f"Response code: {response_code}\n"
+                f"Payload: {received_data}"
+            )
+
+        return received_data
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import os
     from dotenv import load_dotenv
 
     load_dotenv()
-    HOST = os.getenv('HOST')
-    PORT = int(os.getenv('PORT'))
+    HOST = os.getenv("HOST")
+    PORT = int(os.getenv("PORT"))
 
     s = Session(HOST, PORT)
     login_response = s.get(ActionCode.LOGIN, {"name": "Boris"})
