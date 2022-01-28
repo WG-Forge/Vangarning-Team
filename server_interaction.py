@@ -5,7 +5,6 @@ from typing import Optional
 from enum import IntEnum
 
 
-# TODO: add exceptions handling
 # TODO: add logging
 # TODO: add docstrings
 
@@ -20,6 +19,19 @@ class ActionCode(IntEnum):
     CHAT = 100
     MOVE = 101
     SHOOT = 102
+
+
+class ResponseCode(IntEnum):
+    OK = 0
+    BAD_COMMAND = 1
+    ACCESS_DENIED = 2
+    INAPPROPRIATE_GAME_STATE = 3
+    TIMEOUT = 4
+    INTERNAL_SERVER_ERROR = 500
+
+
+class ResponseException(Exception):
+    pass
 
 
 class Session:
@@ -42,6 +54,12 @@ class Session:
         )
 
     def get(self, action: (ActionCode, int), data: Optional[dict] = None) -> dict:
+        """
+
+        :param action:
+        :param data:
+        :return:
+        """
         if isinstance(action, ActionCode):
             action = action.value
 
@@ -56,11 +74,14 @@ class Session:
             else json.loads(self.client_socket.recv(received_data_len))
         )
 
-        result = {
-            "response_code": response_code,
-            "data": received_data,
-        }
-        return result
+        if response_code != ResponseCode.OK:
+            raise ResponseException(
+                f'Error message: {received_data["error_message"]}\n'
+                f"Response code: {response_code}\n"
+                f"Payload: {received_data}"
+            )
+
+        return received_data
 
 
 if __name__ == "__main__":
