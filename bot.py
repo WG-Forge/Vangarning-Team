@@ -170,25 +170,14 @@ class SimpleBot(Bot):
         # проверка нейтралитета
 
         # атакующий был атакован целью на прошлом ходу
-        shooter_was_attacked = False
-        for attack in attack_matrix.items():
-            if (
-                vehicles[attack[1]]["player_id"] == shooter["player_id"]
-                and attack[0] == victim["player_id"]
-            ):
-                shooter_was_attacked = True
-                break
+        if not shooter["player_id"] in attack_matrix[victim["player_id"]]:
 
-        # цель атакована другим игроком на прошлом ходу
-        if not shooter_was_attacked:
-            for attack in attack_matrix.items():
-                if (
-                    vehicles[attack[1]]["player_id"] == victim["player_id"]
-                    and attack[0] != shooter["player_id"]
-                ):
+            # цель атакована другим игроком на прошлом ходу
+            for attack_item in attack_matrix.items():
+                if victim["player_id"] in attack_item[1] and attack_item[0] != shooter["player_id"]:
                     return False
 
         # проверка зоны поражения
-        if self.__dist(shooter["position"], victim["position"]) == 2:
-            return True
-        return False
+        if self.__dist(shooter["position"], victim["position"]) != 2:
+            return False
+        return True
