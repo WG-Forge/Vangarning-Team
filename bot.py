@@ -1,3 +1,6 @@
+from .server_interaction import ActionCode
+
+
 class Bot:
     def __init__(self, game_map):
         self.map = game_map
@@ -5,10 +8,9 @@ class Bot:
 
 class SimpleBot(Bot):
     # принимает словарь game_state
-    # возвращает словарь с ключами "move", "shoot", значения - словари: ключ - id танка,
-    # значение - данные для действия (словарь с координатами)
+    # возвращает список списков. Внутренние списки: 1 позиция - ActionCode, 2 - id танка 3 - данные
     def get_actions(self, game_state):
-        actions = {"move": {}, "shoot": {}}
+        actions = []
 
         base = self.map["content"]["base"].copy()
 
@@ -30,7 +32,11 @@ class SimpleBot(Bot):
                     game_state["vehicles"],
                     game_state["attack_matrix"],
                 ):
-                    actions["shoot"][vehicle[0]] = enemy_vehicle["position"]
+                    actions.append(
+                        [ActionCode.SHOOT, vehicle[0], enemy_vehicle["position"].copy()]
+                    )
+                    enemy_vehicle["position"] = enemy_vehicle["spawn_position"].copy()
+                    enemy_vehicle["health"] = 2
                     made_action = True
                     break
             if made_action:
@@ -86,7 +92,15 @@ class SimpleBot(Bot):
                             game_state["vehicles"],
                             game_state["attack_matrix"],
                         ):
-                            actions["shoot"][vehicle[0]] = other_vehicle["position"]
+
+                            actions.append(
+                                [
+                                    ActionCode.SHOOT,
+                                    vehicle[0],
+                                    other_vehicle["position"].copy(),
+                                ]
+                            )
+                            other_vehicle["health"] -= 1
                             made_action = True
                             break
 
@@ -94,7 +108,10 @@ class SimpleBot(Bot):
                     continue
 
                 # хекс свободен - танк перемещается к нему
-                actions["move"][vehicle[0]] = hex_closest_to_base
+                actions.append(
+                    [ActionCode.MOVE, vehicle[0], hex_closest_to_base.copy()]
+                )
+                vehicle["position"] = hex_closest_to_base.copy()
                 made_action = True
 
                 if made_action:
@@ -110,7 +127,10 @@ class SimpleBot(Bot):
                     game_state["vehicles"],
                     game_state["attack_matrix"],
                 ):
-                    actions["shoot"][vehicle[0]] = enemy_vehicle["position"]
+                    actions.append(
+                        [ActionCode.SHOOT, vehicle[0], enemy_vehicle["position"].copy()]
+                    )
+                    enemy_vehicle["health"] -= 1
                     break
 
         return actions
