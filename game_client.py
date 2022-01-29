@@ -89,11 +89,32 @@ def game_loop(game: GameSession, bot: Bot):
         game.turn()
 
 
+def game_loop_multiple(bot, *games):
+    while True:
+        for game in games:
+            game_state = game.get_game_state()
+            print(game_state["current_turn"], game_state['finished'])
+            if game_state["current_player_idx"] == game.current_player_id:
+                actions = bot.get_actions(game_state)
+                for action in actions:
+                    print(action)
+                    print(game_state['vehicles'][action[1]])
+                    game.action(*action)
+
+            game.turn()
+
+
 if __name__ == "__main__":
     game_session = GameSession(
         name='Bot_test_1',
-        game='VT_test_2',
-        num_turns=6
+        game='VT_test_5',
+        num_turns=6,
+        num_players=2
     )
+    game_session_1 = GameSession(
+        name='Bot_test_2',
+        game='VT_test_5',
+    )
+
     simple_bot = SimpleBot(game_session.map)
-    game_loop(game_session, simple_bot)
+    game_loop_multiple(simple_bot, game_session, game_session_1)
