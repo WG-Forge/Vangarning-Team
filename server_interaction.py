@@ -35,10 +35,14 @@ class ResponseException(Exception):
 
 
 class Session:
+    """
+    Provides server interface.
+    """
+
     def __init__(self, host: str, port: int):
         self.server_details = (host, port)
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client_socket.settimeout(11)
+        self.client_socket.settimeout(11)   # As one game round is 10s + 1s for latencies
         self.client_socket.connect(self.server_details)
 
     def __del__(self):
@@ -56,12 +60,11 @@ class Session:
     def get(self, action: (ActionCode, int), data: Optional[dict] = None) -> dict:
         """
 
-        :param action:
-        :param data:
-        :return:
+
+        :param action: action code, one from the list of codes in server documentation
+        :param data: data to send with the request
+        :return: 'data' part of response from server
         """
-        if isinstance(action, ActionCode):
-            action = action.value
 
         message = self._generate_message(action, data)
         self.client_socket.sendall(message)

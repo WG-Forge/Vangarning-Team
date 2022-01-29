@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 
 from server_interaction import Session, ActionCode
+from bot import SimpleBot, Bot
 
 # TODO: add docs for GameSession.__init__
 
@@ -24,6 +25,11 @@ def validate_login_info(login_info: dict):
         "is_observer",
     )
 
+    if "name" not in login_info:
+        raise WrongPayloadFormatException(
+                "Field 'name' is required."
+            )
+
     for var in login_info.keys():
         if var not in valid_fields:
             raise WrongPayloadFormatException(
@@ -37,7 +43,7 @@ class GameSession:
 
     """
 
-    def __init__(self, **login_info,):
+    def __init__(self, **login_info):
         validate_login_info(login_info)
 
         self.server = Session(HOST, PORT)
@@ -45,17 +51,9 @@ class GameSession:
 
         self.current_player_id = login_response["idx"]
         self.map = self.server.get(ActionCode.MAP)
-        self.game_state = self.server.get(ActionCode.GAME_STATE)
 
-    def update_game_state(self):
-        self.game_state = self.server.get(ActionCode.GAME_STATE)
-
-    # @property
-    # def game_state(self):
-    #     """
-    #     Updates game state from server for every call.
-    #     """
-    #     return self.server.get(ActionCode.GAME_STATE)
+    def get_game_state(self):
+        return self.server.get(ActionCode.GAME_STATE)
 
     def game_actions(self) -> dict:
         return self.server.get(ActionCode.GAME_ACTIONS)
@@ -66,36 +64,30 @@ class GameSession:
     def chat(self, message: str) -> dict:
         return self.server.get(ActionCode.CHAT, {"message": message})
 
-    def move(self, vehicle_id: int, target: dict) -> dict:
+    def action(self, action: (ActionCode, int), vehicle_id: int, target: dict) -> dict:
         # TODO: Add validation for vehicle_id and target
         payload = {
             "vehicle_id": vehicle_id,
             "target": target,
         }
-        return self.server.get(ActionCode.MOVE, payload)
-
-    def shoot(self, vehicle_id: int, target: dict) -> dict:
-        # TODO: Add validation for vehicle_id and target
-        payload = {
-            "vehicle_id": vehicle_id,
-            "target": target,
-        }
-        return self.server.get(ActionCode.SHOOT, payload)
+        return self.server.get(action, payload)
 
     def logout(self) -> dict:
         return self.server.get(ActionCode.LOGOUT)
 
 
-def game_loop(game: GameSession):
+def game_loop(game: GameSession, bot: Bot):
     while True:
-        game.update_game_state()
-        game_state = game.game_state
+        game_state = game.get_game_state()
         if game_state["current_player_idx"] == game.current_player_id:
-            pass  # Send game_state to bot
+            actions = bot.get_actions(game_state)
+            for action in actions:
+                game.action(*action)
 
         game.turn()
 
 
 if __name__ == "__main__":
     game_session = GameSession()
-    game_loop(game_session)
+    simple_bot = SimpleBot(game_session.map)
+    game_loop(game_session, simple_bot)
