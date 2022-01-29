@@ -1,4 +1,4 @@
-from .server_interaction import ActionCode
+from server_interaction import ActionCode
 
 
 class Bot:
@@ -138,9 +138,9 @@ class SimpleBot(Bot):
     # возвращает список с хексамами находищихся от position на расстоянии от min_dist до max_dist
     def __get_hexes(self, position, min_dist, max_dist):
         hexes = []
-        for x in range(-max_dist - 1, max_dist):
+        for x in range(-max_dist, max_dist + 1):
             for y in range(
-                min(-max_dist, -max_dist - x - 1), max(max_dist, max_dist - x)
+                max(-max_dist, -max_dist - x), min(max_dist + 1, max_dist - x + 1)
             ):
                 z = -x - y
                 hex_pos = {
@@ -150,7 +150,7 @@ class SimpleBot(Bot):
                 }
                 dist = self.__dist(hex_pos, position)
                 if dist >= min_dist:
-                    hexes.append({"x": x, "y": y, "z": z})
+                    hexes.append(hex_pos)
         return hexes
 
     # вычисляет расстояние между pos1 и pos2
