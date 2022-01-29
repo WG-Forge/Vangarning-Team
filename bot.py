@@ -111,7 +111,7 @@ class SimpleBot(Bot):
                 actions.append(
                     [ActionCode.MOVE, vehicle[0], hex_closest_to_base.copy()]
                 )
-                vehicle["position"] = hex_closest_to_base.copy()
+                vehicle[1]["position"] = hex_closest_to_base.copy()
                 made_action = True
 
                 if made_action:
