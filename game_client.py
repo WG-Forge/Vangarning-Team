@@ -79,7 +79,9 @@ class GameSession:
 def game_loop(game: GameSession, bot: Bot):
     while True:
         game_state = game.get_game_state()
+        print(game_state["current_turn"], game_state['finished'])
         if game_state["current_player_idx"] == game.current_player_id:
+            print(f'{game_state["current_turn"]} turn')
             actions = bot.get_actions(game_state)
             for action in actions:
                 game.action(*action)
@@ -88,6 +90,10 @@ def game_loop(game: GameSession, bot: Bot):
 
 
 if __name__ == "__main__":
-    game_session = GameSession()
+    game_session = GameSession(
+        name='Bot_test_1',
+        game='VT_test_2',
+        num_turns=6
+    )
     simple_bot = SimpleBot(game_session.map)
     game_loop(game_session, simple_bot)

@@ -1,4 +1,4 @@
-from .server_interaction import ActionCode
+from server_interaction import ActionCode
 
 
 class Bot:
