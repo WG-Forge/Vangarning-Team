@@ -37,18 +37,23 @@ class ResponseException(Exception):
 class Session:
     """
     Provides server interface.
+
+    Client-server message format:
+    {action (4 bytes)} +
+    {data length (4 bytes)} +
+    {bytes of UTF-8 string with data in JSON format}
     """
 
     def __init__(self, host: str, port: int):
         self.server_details = (host, port)
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client_socket.settimeout(11)   # As one game round is 10s + 1s for latencies
+        self.client_socket.settimeout(11)  # As one game round is 10s + 1s for latencies
         self.client_socket.connect(self.server_details)
 
     def __del__(self):
         self.client_socket.close()
 
-    def _generate_message(self, code: int, data: Optional[dict] = None):
+    def __generate_message(self, code: int, data: Optional[dict] = None):
         if data is None:
             return struct.pack("<ii", code, 0)
 
@@ -59,14 +64,18 @@ class Session:
 
     def get(self, action: (ActionCode, int), data: Optional[dict] = None) -> dict:
         """
+        Returns response from the server.
 
+        Converts data to client-server message format, sends the result to
+        the server and returns 'data' part of the result if response
+        code was OK, otherwise raises ResponseException.
 
         :param action: action code, one from the list of codes in server documentation
         :param data: data to send with the request
         :return: 'data' part of response from server
         """
 
-        message = self._generate_message(action, data)
+        message = self.__generate_message(action, data)
         self.client_socket.sendall(message)
 
         response_code = int.from_bytes(self.client_socket.recv(4), "little")
@@ -79,9 +88,8 @@ class Session:
 
         if response_code != ResponseCode.OK:
             raise ResponseException(
-                f'Error message: {received_data["error_message"]}\n'
                 f"Response code: {response_code}\n"
-                f"Payload: {received_data}"
+                f'Error message: {received_data["error_message"]}\n'
             )
 
         return received_data
@@ -99,10 +107,8 @@ if __name__ == "__main__":
     login_response = s.get(ActionCode.LOGIN, {"name": "Boris"})
     map_response = s.get(ActionCode.MAP)
     game_state_response = s.get(ActionCode.GAME_STATE)
-    game_actions_response = s.get(ActionCode.GAME_ACTIONS)
     logout_response = s.get(ActionCode.LOGOUT)
     print(login_response)
     print(map_response)
     print(game_state_response)
-    print(game_actions_response)
     print(logout_response)
