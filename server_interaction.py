@@ -1,9 +1,8 @@
+import json
 import socket
 import struct
-import json
-from typing import Optional
 from enum import IntEnum
-
+from typing import Optional
 
 # TODO: add logging
 # TODO: add docstrings
@@ -106,6 +105,7 @@ class Session:
 
 if __name__ == "__main__":
     import os
+
     from dotenv import load_dotenv
 
     load_dotenv()
