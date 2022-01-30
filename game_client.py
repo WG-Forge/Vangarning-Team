@@ -91,45 +91,83 @@ class GameSession:
         return self.server.get(ActionCode.LOGOUT)
 
 
-def game_loop(bot, *games):
+def game_loop(bot, game):
+    """
+    Plays the given game with the given bot.
+
+    :param bot:
+    :param game:
+    :return:
+    """
     is_finished = False
     while not is_finished:
-        for game in games:
-            game_state = game.get_game_state()
+        game_state = game.get_game_state()
 
-            if game_state["finished"] == "true":
-                is_finished = True
-                break
+        is_finished = game_state["finished"]
 
-            if game_state["current_player_idx"] == game.player_id:
+        if is_finished:
+            print("You won" if game_state["winner"] == game.player_id else "You lost")
+            break
+
+        if game_state["current_player_idx"] == game.player_id:
+            print(
+                f'Round: {game_state["current_turn"]}, ' f"player: {game.player_name}"
+            )
+            for action in bot.get_actions(game_state):
+                game.action(*action)
                 print(
-                    f'Round: {game_state["current_turn"]}, '
-                    f"player: {game.player_name}"
+                    f"  Action: "
+                    f'{"shoot" if action[0] == ActionCode.SHOOT else "move"}'
+                    f" Actor: {action[1]} Target: {action[2]}"
                 )
-                actions = bot.get_actions(game_state)
-                for action in actions:
 
-                    print(
-                        f"  Action: "
-                        f'{"shoot" if action[0] == ActionCode.SHOOT else "move"}'
-                        f" Actor: {action[1]} Target: {action[2]}"
-                    )  # Badly written f-string just for fast check
-
-                    game.action(*action)
-
-            game.turn()
+        game.turn()
 
 
 if __name__ == "__main__":
+
+    def game_loop_for_testing(bot, *games):
+        is_finished = False
+        while not is_finished:
+            for game in games:
+                game_state = game.get_game_state()
+
+                is_finished = game_state["finished"]
+
+                if is_finished:
+                    print(f"Winner: {game_state['winner']}")
+                    break
+
+                if game_state["current_player_idx"] == game.player_id:
+                    print(
+                        f'Round: {game_state["current_turn"]}, '
+                        f"player: {game.player_name}"
+                    )
+                    actions = bot.get_actions(game_state)
+                    for action in actions:
+                        game.action(*action)
+                        print(
+                            f"  Action: "
+                            f'{"shoot" if action[0] == ActionCode.SHOOT else "move"}'
+                            f" Actor: {action[1]} Target: {action[2]}"
+                        )
+
+                    game.turn()  # Sending turn request only with bot whose
+                    # turn is played not to block the for loop
+
     game_name = "VT_test"
 
     game_session = GameSession(
-        name="Bot_test_1", game=game_name, num_turns=20, num_players=2
+        name="Bot_test_1", game=game_name, num_turns=45, num_players=3
     )
     game_session_1 = GameSession(
         name="Bot_test_2",
         game=game_name,
     )
+    game_session_2 = GameSession(
+        name="Bot_test_3",
+        game=game_name,
+    )
 
     simple_bot = SimpleBot(game_session.map)
-    game_loop(simple_bot, game_session, game_session_1)
+    game_loop_for_testing(simple_bot, game_session, game_session_1, game_session_2)
