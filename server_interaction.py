@@ -38,6 +38,9 @@ class Session:
     """
     Provides server interface.
 
+    Not a singleton as multiple clients from
+    one PC needed for testing purposes.
+
     Client-server message format:
     {action (4 bytes)} +
     {data length (4 bytes)} +
@@ -52,6 +55,13 @@ class Session:
 
     def __del__(self):
         self.client_socket.close()
+
+    def __recvall(self, length):
+        result = b""
+        while len(result) != length:
+            result += self.client_socket.recv(length - len(result))
+
+        return result
 
     def __generate_message(self, code: int, data: Optional[dict] = None):
         if data is None:
@@ -78,12 +88,11 @@ class Session:
         message = self.__generate_message(action, data)
         self.client_socket.sendall(message)
 
-        response_code = int.from_bytes(self.client_socket.recv(4), "little")
-        received_data_len = int.from_bytes(self.client_socket.recv(4), "little")
+        response_code, received_data_len = struct.unpack("<ii", self.__recvall(8))
         received_data = (
             {}
             if received_data_len == 0
-            else json.loads(self.client_socket.recv(received_data_len))
+            else json.loads(self.__recvall(received_data_len))
         )
 
         if response_code != ResponseCode.OK:
