@@ -1,14 +1,8 @@
-import os
-from dotenv import load_dotenv
+from bot import Bot, SimpleBot
+from server_interaction import ActionCode, Session
 
-from server_interaction import Session, ActionCode
-from bot import SimpleBot, Bot
-
-# TODO: add docs for GameSession.__init__
-
-load_dotenv()
-HOST = os.getenv("HOST")
-PORT = int(os.getenv("PORT"))
+HOST = "wgforge-srv.wargaming.net"
+PORT = 443
 
 
 class WrongPayloadFormatException(Exception):
@@ -91,7 +85,7 @@ class GameSession:
         return self.server.get(ActionCode.LOGOUT)
 
 
-def game_loop(bot, game):
+def game_loop(bot: Bot, game: GameSession):
     """
     Plays the given game with the given bot.
 
