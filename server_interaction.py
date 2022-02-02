@@ -101,23 +101,3 @@ class Session:
             )
 
         return received_data
-
-
-if __name__ == "__main__":
-    import os
-
-    from dotenv import load_dotenv
-
-    load_dotenv()
-    HOST = os.getenv("HOST")
-    PORT = int(os.getenv("PORT"))
-
-    s = Session(HOST, PORT)
-    login_response = s.get(ActionCode.LOGIN, {"name": "Boris"})
-    map_response = s.get(ActionCode.MAP)
-    game_state_response = s.get(ActionCode.GAME_STATE)
-    logout_response = s.get(ActionCode.LOGOUT)
-    print(login_response)
-    print(map_response)
-    print(game_state_response)
-    print(logout_response)
