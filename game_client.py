@@ -110,7 +110,7 @@ class GameSession:
                     f"Field {var}: {login_info[var]} is not valid login field."
                 )
 
-    def get_game_state(self) -> GameState:
+    def get_serialized_game_state(self) -> GameState:
         game_state_raw = self.server.get(ActionCode.GAME_STATE)
 
         if self.__game_state is None:
@@ -119,6 +119,9 @@ class GameSession:
             self.__game_state.update(game_state_raw)
 
         return self.__game_state
+
+    def get_game_state(self) -> dict:
+        return self.server.get(ActionCode.GAME_STATE)
 
     def game_actions(self) -> dict:
         return self.server.get(ActionCode.GAME_ACTIONS)
