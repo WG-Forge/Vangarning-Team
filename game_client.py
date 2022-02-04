@@ -1,4 +1,6 @@
-from bot import Bot, SimpleBot
+from typing import Union
+
+from bot import Bot
 from server_interaction import ActionCode, Session
 
 HOST = "wgforge-srv.wargaming.net"
@@ -73,8 +75,9 @@ class GameSession:
     def chat(self, message: str) -> dict:
         return self.server.get(ActionCode.CHAT, {"message": message})
 
-    def action(self, action: (ActionCode, int), vehicle_id: int, target: dict) -> dict:
-        # TODO: Add validation for vehicle_id and target
+    def action(
+        self, action: Union[ActionCode, int], vehicle_id: int, target: dict
+    ) -> dict:
         payload = {
             "vehicle_id": vehicle_id,
             "target": target,
