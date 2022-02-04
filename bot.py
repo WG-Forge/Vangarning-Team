@@ -4,182 +4,342 @@ from server_interaction import ActionCode
 class Bot:
     def __init__(self, game_map):
         self.map = game_map
+        self.actions = []
+        self.type_order = ["spg", "light_tank", "heavy_tank", "medium_tank", "at_spg"]
+
+    def _get_vehicle_action_order(self, game_state):
+        """
+        Returns id's of current player's vehicles corresponding their action order
+
+        :param game_state: Current game state
+        :return: List of vehicle id's
+        """
+        order = []
+        for type in self.type_order:
+            for vehicle_id, vehicle in game_state["vehicles"].items():
+                if vehicle["vehicle_type"] == type:
+                    order.append(vehicle_id)
+        return order
 
 
 class SimpleBot(Bot):
-    # принимает словарь game_state
-    # возвращает список списков. Внутренние списки: 1 позиция - ActionCode, 2 - id танка 3 - данные
+    def __init__(self, game_map):
+        super().__init__(game_map)
+        self.base = []
+        # temporary solution
+        self.tank_type = {
+            "light_tank": {
+                "speed": 3,
+                "min_shooting_range": 2,
+                "max_shooting_range": 2,
+            },
+            "medium_tank": {
+                "speed": 2,
+                "min_shooting_range": 2,
+                "max_shooting_range": 2,
+            },
+            "heavy_tank": {
+                "speed": 1,
+                "min_shooting_range": 1,
+                "max_shooting_range": 2,
+            },
+            "spg": {"speed": 1, "min_shooting_range": 3, "max_shooting_range": 3},
+            "at_spg": {"speed": 1, "min_shooting_range": 1, "max_shooting_range": 3},
+        }
+
     def get_actions(self, game_state):
-        actions = []
+        """
+        Calculates action for current player's vehicles
 
-        base = self.map["content"]["base"].copy()
+        :param game_state: Current state of game
+        :return: List of lists. Inner list structure: 0: ActionCode, 1: vehicle id, 2: data
+        """
+        self.actions = []
 
-        # выбор действия для каждого танка
-        for vehicle in game_state["vehicles"].items():
-            # танк не принадлежит текущему игроку
-            if vehicle[1]["player_id"] != game_state["current_player_idx"]:
+        self.base = self.map["content"]["base"].copy()
+
+        # Gets order of vehicle actions and calculates action for every current player's vehicle
+        for vehicle_id in super()._get_vehicle_action_order(game_state):
+            vehicle = game_state["vehicles"][vehicle_id]
+            # Vehicle does not belong to current player
+            if vehicle["player_id"] != game_state["current_player_idx"]:
                 continue
 
-            # выстрел в танк с 1 хп
-            made_action = False
-            for enemy_vehicle in game_state["vehicles"].values():
-                if enemy_vehicle["player_id"] == game_state["current_player_idx"]:
-                    continue
-
-                if enemy_vehicle["health"] == 1 and self.__can_shoot(
-                    vehicle[1],
-                    enemy_vehicle,
-                    game_state["vehicles"],
-                    game_state["attack_matrix"],
-                ):
-                    actions.append(
-                        [ActionCode.SHOOT, vehicle[0], enemy_vehicle["position"].copy()]
-                    )
-                    enemy_vehicle["health"] -= 1
-                    made_action = True
-                    break
-            if made_action:
+            # Shoot at vehicle with 1 hp
+            if self.__try_shoot_any_enemy(
+                vehicle_id,
+                game_state["vehicles"],
+                game_state["attack_matrix"],
+                lambda shooter, target: target["health"] == 1,
+            ):
                 continue
 
-            # поиск ближайшего хекса с базой
-            min_dist = self.map["size"]
-            closest_base = None
-            for base_hex in base:
-                dist = self.__dist(vehicle[1]["position"], base_hex)
-                if dist < min_dist:
-                    min_dist = dist
-                    closest_base = base_hex
-            base.remove(closest_base)
+            # Try to move towards the base or shoot at obstacle
+            if self.__try_move_to_base(
+                vehicle_id, game_state["vehicles"], game_state["attack_matrix"]
+            ):
+                continue
 
-            # танк не стоит на найденной базе
-            if closest_base != vehicle[1]["position"]:
-                hex_closest_to_base = vehicle[1]["position"]
+            # Vehicle is already on base, try to shoot at any vehicle
+            self.__try_shoot_any_enemy(
+                vehicle_id, game_state["vehicles"], game_state["attack_matrix"]
+            )
 
-                # поиск ближайшего к базе хекса в зоне досягаемости танка
-                for hex_pos in self.__get_hexes(vehicle[1]["position"], 0, 2):
-                    dist = self.__dist(hex_pos, closest_base)
-                    if dist < min_dist:
+    def __shoot(self, shooter_id, target_id, vehicles):
+        """
+        Makes a shot at target vehicle from shooter vehicle
 
-                        hex_blocked = False
-                        for other_vehicle in game_state["vehicles"].values():
-                            # хекс занят союзным танком / вражеским танком, хекс - не база /
-                            # вражеским танком, хекс - база, невозможно выстрелить из-за расстояния
-                            # - хекс отбрасывается в поиске
-                            if other_vehicle["position"] == hex_pos and (
-                                other_vehicle["player_id"] == vehicle[1]["player_id"]
-                                or hex_pos != closest_base
-                                or self.__dist(
-                                    vehicle[1]["position"], other_vehicle["position"]
-                                )
-                                != 2
-                            ):
-                                hex_blocked = True
-                                break
-                        if hex_blocked:
-                            continue
-
-                        min_dist = dist
-                        hex_closest_to_base = hex_pos
-
-                # хекс занят вражеским танком
-                # - если возможно, выстрел, иначе - пропуск хода (невозможно из-за нейтралитета)
-                for other_vehicle in game_state["vehicles"].values():
-                    if other_vehicle["position"] == hex_closest_to_base:
-                        if self.__can_shoot(
-                            vehicle[1],
-                            other_vehicle,
-                            game_state["vehicles"],
-                            game_state["attack_matrix"],
-                        ):
-
-                            actions.append(
-                                [
-                                    ActionCode.SHOOT,
-                                    vehicle[0],
-                                    other_vehicle["position"].copy(),
-                                ]
-                            )
-                            other_vehicle["health"] -= 1
-                            made_action = True
-                            break
-
-                if made_action:
+        :param shooter_id: Shooter vehicle's id
+        :param target_id: Target vehicle's id
+        :param vehicles: dict of all vehicles
+        """
+        shooter = vehicles[shooter_id]
+        target = vehicles[target_id]
+        # Shooter is at_spg type
+        if shooter["vehicle_type"] == "at_spg":
+            dx = target["position"]["x"] - shooter["position"]["x"]
+            dy = target["position"]["y"] - shooter["position"]["y"]
+            dz = target["position"]["z"] - shooter["position"]["z"]
+            # Shot normal
+            sx = 0 if dx == 0 else dx / abs(dx)
+            sy = 0 if dy == 0 else dy / abs(dy)
+            sz = 0 if dz == 0 else dz / abs(dz)
+            self.actions.append(
+                [
+                    ActionCode.SHOOT,
+                    shooter_id,
+                    {
+                        "x": sx + shooter["position"]["x"],
+                        "y": sy + shooter["position"]["y"],
+                        "z": sz + shooter["position"]["z"],
+                    },
+                ]
+            )
+            # Hexes affected by shot
+            aoe = [
+                {
+                    "x": sx + shooter["position"]["x"],
+                    "y": sy + shooter["position"]["y"],
+                    "z": sz + shooter["position"]["z"],
+                },
+                {
+                    "x": 2 * sx + shooter["position"]["x"],
+                    "y": 2 * sy + shooter["position"]["y"],
+                    "z": 2 * sz + shooter["position"]["z"],
+                },
+                {
+                    "x": 3 * sx + shooter["position"]["x"],
+                    "y": 3 * sy + shooter["position"]["y"],
+                    "z": 3 * sz + shooter["position"]["z"],
+                },
+            ]
+            # Vehicles at affected hexes
+            for vehicle in vehicles.values():
+                if shooter["player_id"] == vehicle["player_id"]:
                     continue
+                if vehicle["position"] in aoe:
+                    vehicle["health"] -= 1
+        else:
+            self.actions.append([ActionCode.SHOOT, shooter_id, target["position"]])
+            target["health"] -= 1
 
-                # хекс свободен - танк перемещается к нему
-                if vehicle[1]["position"] != hex_closest_to_base:
-                    actions.append(
-                        [ActionCode.MOVE, vehicle[0], hex_closest_to_base.copy()]
-                    )
-                    vehicle[1]["position"] = hex_closest_to_base.copy()
-                    made_action = True
+    def __try_shoot_any_enemy(
+        self,
+        shooter_id,
+        vehicles,
+        attack_matrix,
+        function=lambda shooter, target: True,
+    ):
+        """
+        Tries to shoot any enemy vehicle in the game
 
-                if made_action:
-                    continue
+        :param shooter_id: id of shooter vehicle
+        :param vehicles: dict of all vehicles
+        :param attack_matrix:
+        :param function: Optional condition
+        :return: True if the shot was successful, False if not
+        """
 
-            # танк на базе, поиск противника, выстрел по возможности
-            for enemy_vehicle in game_state["vehicles"].values():
-                if enemy_vehicle["player_id"] == game_state["current_player_idx"]:
-                    continue
-                if self.__can_shoot(
-                    vehicle[1],
-                    enemy_vehicle,
-                    game_state["vehicles"],
-                    game_state["attack_matrix"],
+        # Gets generator for all possible targets
+        shoot_targets = filter(
+            lambda target_id: self.__can_shoot(
+                vehicles[shooter_id], vehicles[target_id], attack_matrix
+            )
+            and function(vehicles[shooter_id], vehicles[target_id]),
+            vehicles,
+        )
+
+        shoot_target_id = next(shoot_targets, None)
+        # No possible targets found
+        if shoot_target_id is None:
+            return False
+
+        self.__shoot(shooter_id, shoot_target_id, vehicles)
+        return True
+
+    def __try_move_to_base(self, vehicle_id, vehicles, attack_matrix):
+        """
+        Tries to move vehicle towards the base, if not possible, shoots at obstacle
+        :param vehicle_id: Moving vehicle
+        :param vehicles: dict of all vehicles
+        :param attack_matrix:
+        :return: True if action was made, False if not
+        """
+        vehicle = vehicles[vehicle_id]
+
+        # Closest base hex to the vehicle
+        closest_base = min(
+            self.base, key=lambda base_hex: self.__dist(base_hex, vehicle["position"])
+        )
+        self.base.remove(closest_base)
+
+        # Vehicle is already at the base hex
+        if closest_base == vehicle["position"]:
+            return False
+
+        # Finds closest reachable hex to the base hex
+        closest_hex_to_base = vehicle["position"]
+        min_dist = self.map["size"]
+        for hex in self.__get_hexes(
+            vehicle["position"], 0, self.tank_type[vehicle["vehicle_type"]]["speed"]
+        ):
+            dist = self.__dist(hex, closest_base)
+            if dist >= min_dist:
+                continue
+
+            hex_is_blocked = False
+            for other_vehicle in vehicles.values():
+                # Hex is blocked, can't shoot
+                if other_vehicle["position"] == hex and not self.__can_shoot(
+                    vehicle, other_vehicle, attack_matrix
                 ):
-                    actions.append(
-                        [ActionCode.SHOOT, vehicle[0], enemy_vehicle["position"].copy()]
-                    )
-                    enemy_vehicle["health"] -= 1
+                    hex_is_blocked = True
                     break
 
-        return actions
+            if not hex_is_blocked:
+                min_dist = dist
+                closest_hex_to_base = hex
 
-    # возвращает список с хексамами находищихся от position на расстоянии от min_dist до max_dist
-    def __get_hexes(self, position, min_dist, max_dist):
-        hexes = []
+        # Found hex is blocked, shoot at blocking vehicle
+        for other_vehicle_id, other_vehicle in vehicles.items():
+            if other_vehicle["position"] == closest_hex_to_base:
+                self.__shoot(vehicle_id, other_vehicle_id, vehicles)
+                return True
+
+        # Hex is free, vehicle moving to it
+        if vehicle["position"] != closest_hex_to_base:
+            self.actions.append(
+                [ActionCode.MOVE, vehicle_id, closest_hex_to_base.copy()]
+            )
+            vehicle["position"] = closest_hex_to_base
+            return True
+        return False
+
+        return self.actions
+
+    def __get_hexes(self, origin, min_dist, max_dist):
+        """
+        Generator that yields hexes at given distance from given hex
+
+        :param origin: hex at a distance from which other hexes are generated
+        :param min_dist: minimal distance from origin
+        :param max_dist: maximum distance from origin
+        :return:
+        """
         for x in range(-max_dist, max_dist + 1):
             for y in range(
                 max(-max_dist, -max_dist - x), min(max_dist + 1, max_dist - x + 1)
             ):
                 z = -x - y
                 hex_pos = {
-                    "x": position["x"] + x,
-                    "y": position["y"] + y,
-                    "z": position["z"] + z,
+                    "x": origin["x"] + x,
+                    "y": origin["y"] + y,
+                    "z": origin["z"] + z,
                 }
-                dist = self.__dist(hex_pos, position)
-                if dist >= min_dist:
-                    hexes.append(hex_pos)
-        return hexes
 
-    # вычисляет расстояние между pos1 и pos2
+                if self.__dist(hex_pos, {"x": 0, "y": 0, "z": 0}) > self.map["size"]:
+                    continue
+                if self.__dist(hex_pos, origin) < min_dist:
+                    continue
+                yield hex_pos
+
     def __dist(self, pos1, pos2):
+        """
+        Calculates distance between two hexes
+
+        :param pos1:
+        :param pos2:
+        :return:
+        """
         return (
             abs(pos1["x"] - pos2["x"])
             + abs(pos1["y"] - pos2["y"])
             + abs(pos1["z"] - pos2["z"])
         ) / 2
 
-    # проверяет, может ли shooter выстрелить в victim
-    def __can_shoot(self, shooter, victim, vehicles, attack_matrix):
-        # оба танка принадлежат одному игроку
-        if shooter["player_id"] == victim["player_id"] or victim["health"] <= 0:
+    def __can_shoot(self, shooter, target, attack_matrix):
+        """
+        Checks if it possible to shoot at given target
+
+        :param shooter: Shooting vehicle
+        :param target: Target vehicle
+        :param attack_matrix:
+        :return: True if possible, False if not
+        """
+        # Both vehicles belong to the same player
+        if shooter["player_id"] == target["player_id"]:
+            return False
+        # Target is already destroyed
+        if target["health"] <= 0:
+            return False
+        # Target out of range
+        if not self.__distance_check(shooter, target):
             return False
 
-        # проверка нейтралитета
+        # Neutrality check
+        return self.__neutrality_check(shooter, target, attack_matrix)
 
-        # атакующий был атакован целью на прошлом ходу
-        if not shooter["player_id"] in attack_matrix[str(victim["player_id"])]:
+    def __distance_check(self, shooter, target):
+        """
+        Check if target vehicle is in shooting range of shooter vehicle
 
-            # цель атакована другим игроком на прошлом ходу
+        :param shooter: Shooter vehicle
+        :param target: Target vehicle
+        :return: True if in range, False if not
+        """
+        # Regular vehicle check
+        dist = self.__dist(shooter["position"], target["position"])
+        if (
+            dist > self.tank_type[shooter["vehicle_type"]]["max_shooting_range"]
+            or dist < self.tank_type[shooter["vehicle_type"]]["min_shooting_range"]
+        ):
+            return False
+
+        # AT_SPG range check
+        if shooter["vehicle_type"] == "at_spg":
+            dx = target["position"]["x"] - shooter["position"]["x"]
+            dy = target["position"]["y"] - shooter["position"]["y"]
+            dz = target["position"]["z"] - shooter["position"]["z"]
+            if dx != 0 and dy != 0 and dz != 0:
+                return False
+        return True
+
+    def __neutrality_check(self, shooter, target, attack_matrix):
+        """
+        Checks if shooter vehicle can't shoot at target vehicle due to neutrality rule
+
+        :param shooter: Shooter vehicle
+        :param target: Target vehicle
+        :param attack_matrix:
+        :return: True if shot is possible, False if not
+        """
+        # Shooter wasn't attacked by target on the last turn
+        if not shooter["player_id"] in attack_matrix[str(target["player_id"])]:
+
+            # Target was attacked by other player on the last turn
             for attack_item in attack_matrix.items():
-                if victim["player_id"] in attack_item[1] and attack_item[0] != str(
+                if target["player_id"] in attack_item[1] and attack_item[0] != str(
                     shooter["player_id"]
                 ):
                     return False
-
-        # проверка зоны поражения
-        if self.__dist(shooter["position"], victim["position"]) != 2:
-            return False
         return True
