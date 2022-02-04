@@ -2,7 +2,7 @@ import json
 import socket
 import struct
 from enum import IntEnum
-from typing import Optional
+from typing import Optional, Union
 
 # TODO: add logging
 # TODO: add docstrings
@@ -71,7 +71,7 @@ class Session:
             f"<ii{data_length}s", code, data_length, json.dumps(data).encode("utf-8")
         )
 
-    def get(self, action: (ActionCode, int), data: Optional[dict] = None) -> dict:
+    def get(self, action: Union[ActionCode, int], data: Optional[dict] = None) -> dict:
         """
         Returns response from the server.
 
