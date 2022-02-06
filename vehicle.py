@@ -1,3 +1,9 @@
+"""
+Classes to describe different tank types.
+
+NOT USED ANYWHERE YET
+"""
+
 class Vehicle:
     def __init__(self, player_id, health, spawn_position, position, capture_points):
         self.player_id = player_id
