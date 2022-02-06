@@ -2,10 +2,18 @@ from typing import Union
 
 from bot import Bot
 from server_interaction import ActionCode, Session
+from vehicle import AtSpg, MediumTank, LightTank, HeavyTank, Spg
 
 HOST = "wgforge-srv.wargaming.net"
 PORT = 443
 
+TYPES_TO_CLASSES = {
+    "at_spg": AtSpg,
+    "heavy_tank": HeavyTank,
+    "light_tank": LightTank,
+    "medium_tank": MediumTank,
+    "spg": Spg,
+}
 
 class WrongPayloadFormatException(Exception):
     pass
