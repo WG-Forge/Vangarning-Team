@@ -104,6 +104,7 @@ def game_loop(bot: Bot, game: GameSession):
 
         if is_finished:
             print("You won" if game_state["winner"] == game.player_id else "You lost")
+            print(f"Winner: {game_state['winner']}")
             break
 
         if game_state["current_player_idx"] == game.player_id:

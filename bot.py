@@ -1,53 +1,77 @@
 from server_interaction import ActionCode
 
+# temporary solution
+TANK_TYPE = {
+    "light_tank": {
+        "speed": 3,
+        "min_shooting_range": 2,
+        "max_shooting_range": 2,
+    },
+    "medium_tank": {
+        "speed": 2,
+        "min_shooting_range": 2,
+        "max_shooting_range": 2,
+    },
+    "heavy_tank": {
+        "speed": 1,
+        "min_shooting_range": 1,
+        "max_shooting_range": 2,
+    },
+    "spg": {"speed": 1, "min_shooting_range": 3, "max_shooting_range": 3},
+    "at_spg": {"speed": 1, "min_shooting_range": 1, "max_shooting_range": 3},
+}
+
+TYPE_ORDER = ("spg", "light_tank", "heavy_tank", "medium_tank", "at_spg")
+
 
 class Bot:
     def __init__(self, game_map):
         self.map = game_map
         self.actions = []
-        self.type_order = ["spg", "light_tank", "heavy_tank", "medium_tank", "at_spg"]
 
-    def _get_vehicle_action_order(self, game_state):
+    def _get_vehicles_in_action_order(self, game_state: dict) -> list[tuple[int, dict]]:
         """
-        Returns id's of current player's vehicles corresponding their action order
+        Returns list of current player's vehicles corresponding to their action order.
 
         :param game_state: Current game state
-        :return: List of vehicle id's
+        :return: List of tuples (vehicle_id, vehicle_info)
         """
-        order = []
-        for type in self.type_order:
-            for vehicle_id, vehicle in game_state["vehicles"].items():
-                if vehicle["vehicle_type"] == type:
-                    order.append(vehicle_id)
-        return order
+
+        vehicles = game_state["vehicles"]
+        player_id = game_state["current_player_idx"]
+
+        return sorted(
+            [i for i in vehicles.items() if i[1]["player_id"] == player_id],
+            key=lambda vehicle: TYPE_ORDER.index(vehicle[1]["vehicle_type"]),
+        )
+
+    def _get_enemy_vehicles(self, game_state: dict) -> list[tuple[int, dict]]:
+        vehicles = game_state["vehicles"]
+        player_id = game_state["current_player_idx"]
+
+        return sorted(
+            [i for i in vehicles.items() if i[1]["player_id"] != player_id],
+            key=lambda vehicle: TYPE_ORDER.index(vehicle[1]["vehicle_type"]),
+        )
+
+    def _dist(self, pos1, pos2):
+        """
+        Calculates distance between two hexes
+
+        """
+        return (
+            abs(pos1["x"] - pos2["x"])
+            + abs(pos1["y"] - pos2["y"])
+            + abs(pos1["z"] - pos2["z"])
+        ) / 2
 
 
 class SimpleBot(Bot):
     def __init__(self, game_map):
         super().__init__(game_map)
         self.base = []
-        # temporary solution
-        self.tank_type = {
-            "light_tank": {
-                "speed": 3,
-                "min_shooting_range": 2,
-                "max_shooting_range": 2,
-            },
-            "medium_tank": {
-                "speed": 2,
-                "min_shooting_range": 2,
-                "max_shooting_range": 2,
-            },
-            "heavy_tank": {
-                "speed": 1,
-                "min_shooting_range": 1,
-                "max_shooting_range": 2,
-            },
-            "spg": {"speed": 1, "min_shooting_range": 3, "max_shooting_range": 3},
-            "at_spg": {"speed": 1, "min_shooting_range": 1, "max_shooting_range": 3},
-        }
 
-    def get_actions(self, game_state):
+    def get_actions(self, game_state: dict):
         """
         Calculates action for current player's vehicles
 
@@ -59,12 +83,7 @@ class SimpleBot(Bot):
         self.base = self.map["content"]["base"].copy()
 
         # Gets order of vehicle actions and calculates action for every current player's vehicle
-        for vehicle_id in super()._get_vehicle_action_order(game_state):
-            vehicle = game_state["vehicles"][vehicle_id]
-            # Vehicle does not belong to current player
-            if vehicle["player_id"] != game_state["current_player_idx"]:
-                continue
-
+        for vehicle_id, vehicle in self._get_vehicles_in_action_order(game_state):
             # Shoot at vehicle with 1 hp
             if self.__try_shoot_any_enemy(
                 vehicle_id,
@@ -80,10 +99,12 @@ class SimpleBot(Bot):
             ):
                 continue
 
-            # Vehicle is already on base, try to shoot at any vehicle
+            # Vehicle is already on base, try to shoot any vehicle
             self.__try_shoot_any_enemy(
                 vehicle_id, game_state["vehicles"], game_state["attack_matrix"]
             )
+
+        return self.actions
 
     def __shoot(self, shooter_id, target_id, vehicles):
         """
@@ -188,8 +209,9 @@ class SimpleBot(Bot):
         vehicle = vehicles[vehicle_id]
 
         # Closest base hex to the vehicle
+
         closest_base = min(
-            self.base, key=lambda base_hex: self.__dist(base_hex, vehicle["position"])
+            self.base, key=lambda base_hex: self._dist(base_hex, vehicle["position"])
         )
         self.base.remove(closest_base)
 
@@ -201,9 +223,9 @@ class SimpleBot(Bot):
         closest_hex_to_base = vehicle["position"]
         min_dist = self.map["size"]
         for hex in self.__get_hexes(
-            vehicle["position"], 0, self.tank_type[vehicle["vehicle_type"]]["speed"]
+            vehicle["position"], 0, TANK_TYPE[vehicle["vehicle_type"]]["speed"]
         ):
-            dist = self.__dist(hex, closest_base)
+            dist = self._dist(hex, closest_base)
             if dist >= min_dist:
                 continue
 
@@ -235,8 +257,6 @@ class SimpleBot(Bot):
             return True
         return False
 
-        return self.actions
-
     def __get_hexes(self, origin, min_dist, max_dist):
         """
         Generator that yields hexes at given distance from given hex
@@ -257,25 +277,11 @@ class SimpleBot(Bot):
                     "z": origin["z"] + z,
                 }
 
-                if self.__dist(hex_pos, {"x": 0, "y": 0, "z": 0}) > self.map["size"]:
+                if self._dist(hex_pos, {"x": 0, "y": 0, "z": 0}) > self.map["size"]:
                     continue
-                if self.__dist(hex_pos, origin) < min_dist:
+                if self._dist(hex_pos, origin) < min_dist:
                     continue
                 yield hex_pos
-
-    def __dist(self, pos1, pos2):
-        """
-        Calculates distance between two hexes
-
-        :param pos1:
-        :param pos2:
-        :return:
-        """
-        return (
-            abs(pos1["x"] - pos2["x"])
-            + abs(pos1["y"] - pos2["y"])
-            + abs(pos1["z"] - pos2["z"])
-        ) / 2
 
     def __can_shoot(self, shooter, target, attack_matrix):
         """
@@ -308,11 +314,11 @@ class SimpleBot(Bot):
         :return: True if in range, False if not
         """
         # Regular vehicle check
-        dist = self.__dist(shooter["position"], target["position"])
-        if (
-            dist > self.tank_type[shooter["vehicle_type"]]["max_shooting_range"]
-            or dist < self.tank_type[shooter["vehicle_type"]]["min_shooting_range"]
-        ):
+        dist = self._dist(shooter["position"], target["position"])
+        min_shooting_range = TANK_TYPE[shooter["vehicle_type"]]["min_shooting_range"]
+        max_shooting_range = TANK_TYPE[shooter["vehicle_type"]]["max_shooting_range"]
+
+        if not (min_shooting_range <= dist <= max_shooting_range):
             return False
 
         # AT_SPG range check
@@ -322,6 +328,7 @@ class SimpleBot(Bot):
             dz = target["position"]["z"] - shooter["position"]["z"]
             if dx != 0 and dy != 0 and dz != 0:
                 return False
+
         return True
 
     def __neutrality_check(self, shooter, target, attack_matrix):
@@ -333,13 +340,13 @@ class SimpleBot(Bot):
         :param attack_matrix:
         :return: True if shot is possible, False if not
         """
-        # Shooter wasn't attacked by target on the last turn
-        if not shooter["player_id"] in attack_matrix[str(target["player_id"])]:
+        shooter_pid = shooter["player_id"]
+        target_pid = target["player_id"]
 
+        # Shooter wasn't attacked by target on the last turn
+        if shooter_pid not in attack_matrix[str(target_pid)]:
             # Target was attacked by other player on the last turn
-            for attack_item in attack_matrix.items():
-                if target["player_id"] in attack_item[1] and attack_item[0] != str(
-                    shooter["player_id"]
-                ):
+            for player_id, prev_targets in attack_matrix.items():
+                if player_id != str(shooter_pid) and target_pid in prev_targets:
                     return False
         return True
