@@ -4,6 +4,7 @@ Classes to describe different tank types.
 NOT USED ANYWHERE YET
 """
 
+
 class Vehicle:
     def __init__(self, player_id, health, spawn_position, position, capture_points):
         self.player_id = player_id
@@ -57,7 +58,7 @@ class Vehicle:
 
     def get_current_position(self):
         return self.current_position.get_position()
-    
+
     def repeat_spawn_position(self):
         if not self.move(self.spawn_position):
             raise RuntimeError("spawn position already occupied")

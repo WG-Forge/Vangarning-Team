@@ -2,7 +2,7 @@ from typing import Union
 
 from bot import Bot
 from server_interaction import ActionCode, Session
-from vehicle import AtSpg, MediumTank, LightTank, HeavyTank, Spg, Vehicle
+from vehicle import AtSpg, HeavyTank, LightTank, MediumTank, Spg, Vehicle
 
 HOST = "wgforge-srv.wargaming.net"
 PORT = 443
