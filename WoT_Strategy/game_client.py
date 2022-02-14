@@ -7,59 +7,51 @@ from vehicle import AtSpg, HeavyTank, LightTank, MediumTank, Spg, Vehicle
 HOST = "wgforge-srv.wargaming.net"
 PORT = 443
 
-TYPES_TO_CLASSES = {
-    "at_spg": AtSpg,
-    "heavy_tank": HeavyTank,
-    "light_tank": LightTank,
-    "medium_tank": MediumTank,
-    "spg": Spg,
-}
-
 
 class WrongPayloadFormatException(Exception):
     pass
 
 
-class GameState:
-    """
-    Keeps info about game state.
-
-    NOT USED ANYWHERE YET
-    """
-
-    def __init__(self, player_id: int, data: dict):
-        self.__player_id = player_id
-        self.current_player_id = data["current_player_idx"]
-        self.finished = data["finished"]
-        self.winner = data["winner"]
-        self.enemy_tanks: dict[str, Vehicle] = {}
-        self.allied_tanks: dict[str, Vehicle] = {}
-
-        for vehicle_id, data in data["vehicles"].items():
-            if data["player_id"] == self.__player_id:
-                self.allied_tanks[vehicle_id] = self.__get_vehicle(data)
-            else:
-                self.enemy_tanks[vehicle_id] = self.__get_vehicle(data)
-
-    def update(self, data: dict) -> None:
-        self.current_player_id = data["current_player_idx"]
-        self.finished = data["finished"]
-        self.winner = data["winner"]
-
-        for vehicle_id, data in data["vehicles"].items():
-            if data["player_id"] == self.__player_id:
-                self.allied_tanks[vehicle_id].update_data(data)
-            else:
-                self.enemy_tanks[vehicle_id].update_data(data)
-
-    def __get_vehicle(self, data):
-        return TYPES_TO_CLASSES[data["vehicle_type"]](
-            player_id=data["id"],
-            health=data["health"],
-            spawn_position=data["spawn_position"],
-            position=data["position"],
-            capture_points=data["capture_points "],
-        )
+# class GameState:
+#     """
+#     Keeps info about game state.
+#
+#     NOT USED ANYWHERE YET
+#     """
+#
+#     def __init__(self, player_id: int, data: dict):
+#         self.__player_id = player_id
+#         self.current_player_id = data["current_player_idx"]
+#         self.finished = data["finished"]
+#         self.winner = data["winner"]
+#         self.enemy_tanks: dict[str, Vehicle] = {}
+#         self.allied_tanks: dict[str, Vehicle] = {}
+#
+#         for vehicle_id, data in data["vehicles"].items():
+#             if data["player_id"] == self.__player_id:
+#                 self.allied_tanks[vehicle_id] = self.__get_vehicle(data)
+#             else:
+#                 self.enemy_tanks[vehicle_id] = self.__get_vehicle(data)
+#
+#     def update(self, data: dict) -> None:
+#         self.current_player_id = data["current_player_idx"]
+#         self.finished = data["finished"]
+#         self.winner = data["winner"]
+#
+#         for vehicle_id, data in data["vehicles"].items():
+#             if data["player_id"] == self.__player_id:
+#                 self.allied_tanks[vehicle_id].update_data(data)
+#             else:
+#                 self.enemy_tanks[vehicle_id].update_data(data)
+#
+#     def __get_vehicle(self, data):
+#         return TYPES_TO_CLASSES[data["vehicle_type"]](
+#             player_id=data["id"],
+#             health=data["health"],
+#             spawn_position=data["spawn_position"],
+#             position=data["position"],
+#             capture_points=data["capture_points "],
+#         )
 
 
 class GameSession:
@@ -115,15 +107,15 @@ class GameSession:
                     f"Field {var}: {login_info[var]} is not valid login field."
                 )
 
-    def get_serialized_game_state(self) -> GameState:
-        game_state_raw = self.server.get(ActionCode.GAME_STATE)
-
-        if self.__game_state is None:
-            self.__game_state = GameState(self.player_id, game_state_raw)
-        else:
-            self.__game_state.update(game_state_raw)
-
-        return self.__game_state
+    # def get_serialized_game_state(self) -> GameState:
+    #     game_state_raw = self.server.get(ActionCode.GAME_STATE)
+    #
+    #     if self.__game_state is None:
+    #         self.__game_state = GameState(self.player_id, game_state_raw)
+    #     else:
+    #         self.__game_state.update(game_state_raw)
+    #
+    #     return self.__game_state
 
     def get_game_state(self) -> dict:
         return self.server.get(ActionCode.GAME_STATE)
@@ -182,3 +174,9 @@ def game_loop(bot: Bot, game: GameSession):
                 )
 
         game.turn()
+
+if __name__ == "__main__":
+    from step_score_bot import StepScoreBot
+    g = GameSession(name="Boris")
+    bot = StepScoreBot(g.map)
+    game_loop(bot, g)

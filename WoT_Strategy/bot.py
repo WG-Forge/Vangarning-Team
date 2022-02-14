@@ -1,3 +1,5 @@
+import struct
+
 from server_interaction import ActionCode
 
 # temporary solution
@@ -27,7 +29,9 @@ TYPE_ORDER = ("spg", "light_tank", "heavy_tank", "medium_tank", "at_spg")
 class Bot:
     def __init__(self, game_map):
         self.map = game_map
-        self.actions = []
+
+    def get_actions(self, game_state: dict):
+        raise NotImplementedError
 
     def _get_vehicles_in_action_order(self, game_state: dict) -> list[tuple[int, dict]]:
         """
@@ -69,6 +73,7 @@ class Bot:
 class SimpleBot(Bot):
     def __init__(self, game_map):
         super().__init__(game_map)
+        self.actions = []
         self.base = []
 
     def get_actions(self, game_state: dict):
