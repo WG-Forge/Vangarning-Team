@@ -3,9 +3,10 @@ from time import perf_counter
 
 from bot import SimpleBot
 from game_client import GameSession, game_loop
+from step_score_bot import StepScoreBot
 
 if __name__ == "__main__":
-    game_name = "VT_test"
+    game_name = "VT_test3"
 
     game_session = GameSession(
         name="Bot_test_1", game=game_name, num_turns=45, num_players=3
@@ -19,7 +20,7 @@ if __name__ == "__main__":
         game=game_name,
     )
 
-    simple_bot = SimpleBot(game_session.map)
+    simple_bot = StepScoreBot(game_session.map)
 
     tr1 = threading.Thread(target=game_loop, args=(simple_bot, game_session))
     tr2 = threading.Thread(target=game_loop, args=(simple_bot, game_session_1))

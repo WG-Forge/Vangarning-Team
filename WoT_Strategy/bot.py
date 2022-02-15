@@ -1,6 +1,5 @@
-import struct
-
 from server_interaction import ActionCode
+from settings import TYPE_ORDER
 
 # temporary solution
 TANK_TYPE = {
@@ -22,8 +21,6 @@ TANK_TYPE = {
     "spg": {"speed": 1, "min_shooting_range": 3, "max_shooting_range": 3},
     "at_spg": {"speed": 1, "min_shooting_range": 1, "max_shooting_range": 3},
 }
-
-TYPE_ORDER = ("spg", "light_tank", "heavy_tank", "medium_tank", "at_spg")
 
 
 class Bot:
