@@ -3,6 +3,7 @@ from timeit import default_timer as timer
 import random
 from bot import SimpleBot
 
+
 def get_possible_actions(game_state, vehicle_id):
     # return possible actions of the vehicle
     pass
@@ -108,7 +109,6 @@ class MonteCarloSearchTree:
         node = self.current_node
         while not node.is_terminal() and node.have_all_children():
             node = node.get_most_valuable_child()
-
         if not node.is_terminal():
             node = node.get_random_child()
         return node
@@ -125,11 +125,11 @@ class MonteCarloSearchTree:
         )
         for vehicle_id, vehicle in all_vehicles:
             if vehicle_id not in node.vehicles_id_already_moved:
-                action = bot.get_action_for_vehicle(game_state, vehicle_id)
+                action = self.bot.get_action_for_vehicle(game_state, vehicle_id)
                 game_state = apply_action(game_state, action)
         game_state = switch_turn(game_state)
         while not game_state["finished"]:
-            for action in bot.get_actions(game_state):
+            for action in self.bot.get_actions(game_state):
                 game_state = apply_action(game_state, action)
         game_state = switch_turn(game_state)
         return game_state["winner"]
@@ -159,7 +159,7 @@ class AdvancedBot:
         player_id = game_state["current_player_idx"]
         all_vehicles = sorted(
             [i for i in vehicles.items() if i[1]["player_id"] == player_id],
-            key=lambda vehicle: TYPE_ORDER.index(vehicle[1]["vehicle_type"]),
+            key=lambda vehicle: self.TYPE_ORDER.index(vehicle[1]["vehicle_type"]),
         )
         for i in range(len(all_vehicles)):
             actions.append(tree.get_action(), timeout / len(all_vehicles))
