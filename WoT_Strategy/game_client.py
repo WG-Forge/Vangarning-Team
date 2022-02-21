@@ -14,7 +14,6 @@ TYPES_TO_CLASSES = {
     "spg": Spg,
 }
 
-
 from time import perf_counter_ns
 
 
@@ -103,9 +102,7 @@ class BotGameState:
 
                     offset_value = self.get_hex_value(offset_coords)
                     if int(offset_value) >= 1:
-                        self.get_vehicle(
-                            offset_value
-                        ).health_points -= actor.damage
+                        self.get_vehicle(offset_value).health_points -= actor.damage
 
     def get_vehicle(self, vehicle_id: str) -> Vehicle:
         return self.vehicles[vehicle_id]
@@ -274,8 +271,6 @@ class BotGameState:
 
         return enemies
 
-
-
     @property
     def current_player_vehicles(self):
         return [
@@ -291,27 +286,36 @@ def game_loop(bot: Bot, game: GameSession):
     :param game:
     :return:
     """
-    while True:
-        game_state = game.game_state()
+    while game_tick(bot, game) is not None:
+        pass
 
-        if game_state["finished"]:
-            print("You won" if game_state["winner"] == game.player_id else "You lost")
-            print(f"Winner: {game_state['winner']}")
-            break
 
-        if game_state["current_player_idx"] == game.player_id:
+def game_tick(bot: Bot, game: GameSession):
+    """
+    Performs full turn in the game
+    :param bot:
+    :param game:
+    :return:
+    """
+    game_state = game.game_state()
+
+    if game_state["finished"]:
+        print("You won" if game_state["winner"] == game.player_id else "You lost")
+        print(f"Winner: {game_state['winner']}")
+        return None
+
+    if game_state["current_player_idx"] == game.player_id:
+        print(f'Round: {game_state["current_turn"]}, ' f"player: {game.player_name}")
+        for action in bot.get_actions(game_state):
+            game.action(*action)
             print(
-                f'Round: {game_state["current_turn"]}, ' f"player: {game.player_name}"
+                f"  Action: "
+                f'{"shoot" if action[0] == ActionCode.SHOOT else "move"}'
+                f" Actor: {action[1]} Target: {action[2]}"
             )
-            for action in bot.get_actions(game_state):
-                game.action(*action)
-                print(
-                    f"  Action: "
-                    f'{"shoot" if action[0] == ActionCode.SHOOT else "move"}'
-                    f" Actor: {action[1]} Target: {action[2]}"
-                )
 
-        game.turn()
+    game.turn()
+    return game_state
 
 
 if __name__ == "__main__":
