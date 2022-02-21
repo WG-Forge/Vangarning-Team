@@ -1,6 +1,8 @@
 import math
-from timeit import default_timer as timer
 import random
+from settings import TYPE_ORDER
+from timeit import default_timer as timer
+
 from bot import SimpleBot
 
 
@@ -27,7 +29,11 @@ class MCSTNode:
         self.visits = 0
         # stores the vehicles of the current player that already made an action
         self.vehicles_id_already_moved = vehicles_id_already_moved
-        if parent is not None and parent.game_state["current_player_idx"] != game_state["current_player_idx"]:
+        if (
+            parent is not None
+            and parent.game_state["current_player_idx"]
+            != game_state["current_player_idx"]
+        ):
             self.vehicles_id_already_moved = set()
             self.game_state = switch_turn(self.game_state)
         self.my_vehicle_id = self._get_my_vehicle_id()
@@ -43,7 +49,7 @@ class MCSTNode:
         player_id = self.game_state["current_player_idx"]
         all_vehicles = sorted(
             [i for i in vehicles.items() if i[1]["player_id"] == player_id],
-            key=lambda vehicle: self.TYPE_ORDER.index(vehicle[1]["vehicle_type"]),
+            key=lambda vehicle: TYPE_ORDER.index(vehicle[1]["vehicle_type"]),
         )
         for vehicle_id, vehicle in all_vehicles:
             if vehicle_id not in self.vehicles_id_already_moved:
@@ -58,7 +64,9 @@ class MCSTNode:
         for_child_already_moved.add(self.my_vehicle_id)
         possible_actions = get_possible_actions(self.game_state, self.my_vehicle_id)
         for action in possible_actions:
-            child = MCSTNode(apply_action(self.game_state, action), self, for_child_already_moved)
+            child = MCSTNode(
+                apply_action(self.game_state, action), self, for_child_already_moved
+            )
             self.children.append((action, child))
 
     def have_all_children(self):
@@ -82,8 +90,8 @@ class MCSTNode:
                 best_action, best_child = action, child
         return best_action, best_child
 
-    def get_UCT(self):
-        assert (self.visits > 0)
+    def get_uct(self):
+        assert self.visits > 0
         result = self.wins / self.visits
         if self.parent is not None:
             result += math.sqrt(2 * math.log(self.parent.visits) / self.visits)
@@ -121,7 +129,7 @@ class MonteCarloSearchTree:
         player_id = game_state["current_player_idx"]
         all_vehicles = sorted(
             [i for i in vehicles.items() if i[1]["player_id"] == player_id],
-            key=lambda vehicle: self.TYPE_ORDER.index(vehicle[1]["vehicle_type"]),
+            key=lambda vehicle: TYPE_ORDER.index(vehicle[1]["vehicle_type"]),
         )
         for vehicle_id, vehicle in all_vehicles:
             if vehicle_id not in node.vehicles_id_already_moved:
@@ -159,7 +167,7 @@ class AdvancedBot:
         player_id = game_state["current_player_idx"]
         all_vehicles = sorted(
             [i for i in vehicles.items() if i[1]["player_id"] == player_id],
-            key=lambda vehicle: self.TYPE_ORDER.index(vehicle[1]["vehicle_type"]),
+            key=lambda vehicle: TYPE_ORDER.index(vehicle[1]["vehicle_type"]),
         )
         for i in range(len(all_vehicles)):
             actions.append(tree.get_action(), timeout / len(all_vehicles))
