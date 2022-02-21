@@ -29,11 +29,11 @@ class ResponseCode(IntEnum):
     INTERNAL_SERVER_ERROR = 500
 
 
-class ResponseException(Exception):
+class ResponseError(Exception):
     pass
 
 
-class WrongPayloadFormatException(Exception):
+class WrongPayloadFormatError(Exception):
     pass
 
 
@@ -99,7 +99,7 @@ class Session:
         )
 
         if response_code != ResponseCode.OK:
-            raise ResponseException(
+            raise ResponseError(
                 f"Response code: {response_code}\n"
                 f'Error message: {received_data["error_message"]}\n'
                 f"Data that caused error: {action} {data}"
@@ -153,11 +153,11 @@ class GameSession:
         )
 
         if "name" not in login_info:
-            raise WrongPayloadFormatException("Field 'name' is required.")
+            raise WrongPayloadFormatError("Field 'name' is required.")
 
         for var in login_info.keys():
             if var not in valid_fields:
-                raise WrongPayloadFormatException(
+                raise WrongPayloadFormatError(
                     f"Field {var}: {login_info[var]} is not valid login field."
                 )
 
