@@ -15,6 +15,14 @@ TYPES_TO_CLASSES = {
     "spg": Spg,
 }
 
+# TODO: Replace a_star_search in can_move method to smth faster
+#  but less universal
+
+# TODO: Use logging instead of printing in game_loop function
+# TODO: Add going back to spawn at the next turn if hp == 0 to
+#  update_from_action
+# TODO: Try to prune vehicles, vehicles to players into one data structure
+# TODO: Maybe it will be a good idea to change NEIGHBOURS_OFFSETS to smth else
 
 class Action:
     def __init__(
@@ -32,16 +40,6 @@ class Action:
     @property
     def server_format(self):
         return self.action_code, self.actor.pid, hex.tuple_to_dict(self.target)
-
-
-# TODO: Replace a_star_search in can_move method to smth faster
-#  but less universal
-
-# TODO: Use logging instead of printing in game_loop function
-# TODO: Add going back to spawn at the next turn if hp == 0 to
-#  update_from_action
-# TODO: Try to prune vehicles, vehicles to players into one data structure
-# TODO: Maybe it will be a good idea to change NEIGHBOURS_OFFSETS to smth else
 
 
 class BotGameState:
@@ -396,24 +394,42 @@ def game_loop(bot: Bot, game: GameSession):
     :param game:
     :return:
     """
-    while True:
-        game_state = game.game_state()
+    while game_tick(bot, game) is not None:
+        pass
 
-        if game_state["finished"]:
-            print("You won" if game_state["winner"] == game.player_id else "You lost")
-            print(f"Winner: {game_state['winner']}")
-            break
 
-        if game_state["current_player_idx"] == game.player_id:
+def game_tick(bot: Bot, game: GameSession):
+    """
+    Performs full turn in the game
+    :param bot:
+    :param game:
+    :return:
+    """
+    game_state = game.game_state()
+
+    if game_state["finished"]:
+        print("You won" if game_state["winner"] == game.player_id else "You lost")
+        print(f"Winner: {game_state['winner']}")
+        return None
+
+    if game_state["current_player_idx"] == game.player_id:
+        print(f'Round: {game_state["current_turn"]}, ' f"player: {game.player_name}")
+        for action in bot.get_actions(game_state):
+            game.action(*action.server_format)
             print(
-                f'Round: {game_state["current_turn"]}, ' f"player: {game.player_name}"
+                f"  Action: "
+                f'{"shoot" if action.action_code == ActionCode.SHOOT else "move"}'
+                f" Actor: {action.actor} Target: {action.target}"
             )
-            for action in bot.get_actions(game_state):
-                game.action(*action.server_format)
-                print(
-                    f"  Action: "
-                    f'{"shoot" if action.action_code == ActionCode.SHOOT else "move"}'
-                    f" Actor: {action.actor} Target: {action.target}"
-                )
 
-        game.turn()
+    game.turn()
+
+    return game_state
+
+
+if __name__ == "__main__":
+    from step_score_bot import StepScoreBot
+
+    g = GameSession(name="Boris")
+    bot = StepScoreBot(g.map)
+    game_loop(bot, g)
