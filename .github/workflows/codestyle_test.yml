@@ -18,6 +18,6 @@ jobs:
         
     - name: Test with flake8, pylint and mypy
       run: |
-        flake8 --ignore=E501, W503 $(git ls-files '*.py')
+        flake8 --ignore=E501,W503 $(git ls-files '*.py')
         pylint $(git ls-files '*.py')
         mypy $(git ls-files '*.py')
