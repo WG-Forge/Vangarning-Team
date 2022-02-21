@@ -29,11 +29,7 @@ class MCSTNode:
         self.visits = 0
         # stores the vehicles of the current player that already made an action
         self.vehicles_id_already_moved = vehicles_id_already_moved
-        if (
-            parent is not None
-            and parent.game_state["current_player_idx"]
-            != game_state["current_player_idx"]
-        ):
+        if parent is not None and parent.game_state["current_player_idx"] != game_state["current_player_idx"]:
             self.vehicles_id_already_moved = set()
             self.game_state = switch_turn(self.game_state)
         self.my_vehicle_id = self._get_my_vehicle_id()
