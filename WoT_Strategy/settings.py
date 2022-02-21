@@ -1,4 +1,15 @@
 from enum import IntEnum
+from typing import TypedDict
+
+
+# Typings
+class CoordsDict(TypedDict):
+    x: int
+    y: int
+    z: int
+
+
+CoordsTuple = tuple[int, int, int]
 
 
 class HexCode(IntEnum):

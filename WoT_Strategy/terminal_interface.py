@@ -7,7 +7,8 @@ a game via a terminal command
 import sys
 
 from bot import SimpleBot
-from game_client import GameSession, WrongPayloadFormatException, game_loop
+from game_client import GameSession, game_loop
+from server_interaction import WrongPayloadFormatException
 
 HELP_TEXT = (
     "Usage:\n"
