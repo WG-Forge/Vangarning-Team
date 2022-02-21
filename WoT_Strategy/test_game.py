@@ -1,7 +1,6 @@
 import threading
 from time import perf_counter
 
-from bot import SimpleBot
 from game_client import GameSession, game_loop
 from step_score_bot import StepScoreBot
 
