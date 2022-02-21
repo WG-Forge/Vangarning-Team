@@ -114,7 +114,7 @@ class MonteCarloSearchTree:
         while not node.is_terminal() and node.have_all_children():
             node = node.get_most_valuable_child()
         if not node.is_terminal():
-            node = node.get_random_child()
+            return node.get_random_child()
         return node
 
     def simulation(self, node):
