@@ -170,7 +170,8 @@ class BotGameState:
         """
         for vid, vehicle in vehicles.items():
             vehicle_id = int(vid)
-            del self.vehicles_positions[self.vehicles[vehicle_id].position]
+            if self.vehicles[vehicle_id].position in self.vehicles_positions:
+                del self.vehicles_positions[self.vehicles[vehicle_id].position]
             self.vehicles[vehicle_id].update(vehicle)
             self.vehicles_positions[tuple(vehicle["position"].values())] = vehicle_id
 
