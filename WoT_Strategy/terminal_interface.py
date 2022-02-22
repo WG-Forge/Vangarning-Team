@@ -30,8 +30,10 @@ def game_init(**login_info):
 
 def game_launch(bot, game, gui):
     if gui:
+        # Written here as it opens empty window if --gui was not provided
+        # if imported at the top of the file
         from gui import WoTStrategyApp
-        WoTStrategyApp(game.map, game.game_state()["vehicles"], bot, game).run()
+        WoTStrategyApp(game.map, bot, game).run()
     else:
         game_loop(bot, game)
 
