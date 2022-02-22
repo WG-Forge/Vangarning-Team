@@ -73,35 +73,33 @@ class Hex(Widget):
 class WoTStrategyRoot(Widget):
     hexes = []
     vehicles = {}
+    not_used_colors = [COLORS["red"], COLORS["green"], COLORS["blue"]]
+    ids_to_colors = {}
 
-    def create_vehicles(self, vehicles_data: dict):
-        vehicle_colors = [COLORS["red"], COLORS["green"], COLORS["blue"]]
-        ids_to_colors = {}
-        for id, vehicle_data in vehicles_data.items():
-            if vehicle_data["player_id"] not in ids_to_colors.keys():
-                ids_to_colors[vehicle_data["player_id"]] = vehicle_colors[0]
-                vehicle_colors.remove(vehicle_colors[0])
-            vehicle = Vehicle()
-            vehicle.hp_bar.max_hp = vehicle_data["health"]
-            vehicle.color = ids_to_colors[vehicle_data["player_id"]]
+    def add_vehicle(self, id, vehicle_data):
+        if vehicle_data["player_id"] not in self.ids_to_colors.keys():
+            self.ids_to_colors[vehicle_data["player_id"]] = self.not_used_colors[0]
+            self.not_used_colors.remove(self.not_used_colors[0])
+        vehicle = Vehicle()
+        # TODO: get max hp from local files, not server response
+        vehicle.hp_bar.max_hp = vehicle_data["health"]
+        vehicle.color = self.ids_to_colors[vehicle_data["player_id"]]
 
-            vehicle.file = VEHICLE_TYPES_TO_SPRITES[vehicle_data["vehicle_type"]]
+        vehicle.file = VEHICLE_TYPES_TO_SPRITES[vehicle_data["vehicle_type"]]
 
-            pos_dict = vehicle_data["position"]
-            pos_x, pos_y = cube_to_cartesian(
-                pos_dict["x"], pos_dict["y"], pos_dict["z"]
-            )
-            pos_x, pos_y = pos_x * HEX_SIZE, pos_y * HEX_SIZE
-            self.vehicles[id] = [pos_x, pos_y, vehicle]
-            vehicle.center = self.width / 2 + pos_x, self.height / 2 + pos_y
+        pos_dict = vehicle_data["position"]
+        pos_x, pos_y = cube_to_cartesian(pos_dict["x"], pos_dict["y"], pos_dict["z"])
+        pos_x, pos_y = pos_x * HEX_SIZE, pos_y * HEX_SIZE
+        self.vehicles[id] = [pos_x, pos_y, vehicle]
+        vehicle.center = self.width / 2 + pos_x, self.height / 2 + pos_y
 
-            self.add_widget(vehicle)
+        self.add_widget(vehicle)
 
     def create_map(self, map_data: dict):
         for x in range(-map_data["size"], map_data["size"] + 1):
             for y in range(
-                max(-map_data["size"], -map_data["size"] - x),
-                min(map_data["size"] + 1, map_data["size"] - x + 1),
+                    max(-map_data["size"], -map_data["size"] - x),
+                    min(map_data["size"] + 1, map_data["size"] - x + 1),
             ):
                 z = -x - y
                 hex = Hex()
@@ -130,6 +128,8 @@ class WoTStrategyRoot(Widget):
 
     def update_vehicles(self, vehicles_data):
         for id, vehicle_data in vehicles_data.items():
+            if id not in self.vehicles:
+                self.add_vehicle(id, vehicle_data)
             pos_dict = vehicle_data["position"]
             pos_x, pos_y = cube_to_cartesian(
                 pos_dict["x"], pos_dict["y"], pos_dict["z"]
@@ -148,17 +148,15 @@ class WoTStrategyApp(App):
     To run game with gui: WotStrategyApp(...).run()
     """
 
-    def __init__(self, map_data, vehicles_data, bot, game_session):
+    def __init__(self, map_data, bot, game_session):
         """
 
         :param map_data: map dict from server
-        :param vehicles_data: vehicles dict from server
         :param bot: bot that will be used to choose actions
         :param game_session:
         """
         super().__init__()
         self.map_data = map_data
-        self.vehicles_data = vehicles_data
         self.bot = bot
         self.game_session = game_session
 
@@ -168,7 +166,6 @@ class WoTStrategyApp(App):
         root.size = Window.size
 
         root.create_map(self.map_data)
-        root.create_vehicles(self.vehicles_data)
 
         Clock.schedule_once(self.tick, 0)
         return root

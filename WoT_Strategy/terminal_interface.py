@@ -31,7 +31,7 @@ def game_init(**login_info):
 
 def game_launch(bot, game, gui):
     if gui:
-        WoTStrategyApp(game.map, game.game_state()["vehicles"], bot, game).run()
+        WoTStrategyApp(game.map, bot, game).run()
     else:
         game_loop(bot, game)
 
