@@ -24,6 +24,7 @@ TYPES_TO_CLASSES = {
 # TODO: Try to prune vehicles, vehicles to players into one data structure
 # TODO: Maybe it will be a good idea to change NEIGHBOURS_OFFSETS to smth else
 
+
 class Action:
     def __init__(
         self,
@@ -428,8 +429,9 @@ def game_tick(bot: Bot, game: GameSession):
 
 
 if __name__ == "__main__":
+    from gui import WoTStrategyApp
     from step_score_bot import StepScoreBot
 
     g = GameSession(name="Boris")
     bot = StepScoreBot(g.map)
-    game_loop(bot, g)
+    WoTStrategyApp(g.map, g.game_state()["vehicles"], bot, g).run()

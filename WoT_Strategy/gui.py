@@ -1,9 +1,13 @@
+import os
+
+os.environ["KIVY_NO_ARGS"] = "1"
 from kivy.app import App
-from kivy.uix.widget import Widget
-from kivy.core.window import Window
-from kivy.properties import ListProperty, ObjectProperty, NumericProperty
-from kivy.graphics import Color, Rectangle
 from kivy.clock import Clock
+from kivy.core.window import Window
+from kivy.graphics import Color, Rectangle
+from kivy.properties import ListProperty, NumericProperty, ObjectProperty
+from kivy.uix.widget import Widget
+
 from game_client import game_tick
 
 COLORS = {
