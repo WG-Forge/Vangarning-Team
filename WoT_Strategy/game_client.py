@@ -426,12 +426,3 @@ def game_tick(bot: Bot, game: GameSession):
     game.turn()
 
     return game_state
-
-
-if __name__ == "__main__":
-    from gui import WoTStrategyApp
-    from step_score_bot import StepScoreBot
-
-    g = GameSession(name="Boris")
-    bot = StepScoreBot(g.map)
-    WoTStrategyApp(g.map, g.game_state()["vehicles"], bot, g).run()
