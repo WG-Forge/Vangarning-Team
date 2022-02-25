@@ -1,19 +1,46 @@
 #:kivy 2.0.0
-#:import HEX_SIZE gui.HEX_SIZE
+#:set HEX_SIZE 25
+#:set MAX_HP_BARS 3
+#:set VEHICLE_SIZE_MULTIPLIER 1.5
+
+<SingleHPBar>:
+    canvas:
+        Color:
+            rgb: 0, 1, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
 <HPBar>:
-    max_hp: 2
-    hp: self.max_hp
-    single_bar_width: 5
-    height: self.parent.height * 0.3
-    outline_width: self.height * 0.15
-    width: self.single_bar_width * self.max_hp + (self.max_hp + 1) * self.outline_width
-    pos: self.parent.x + (self.parent.width - self.width) * 0.5, self.parent.y - self.height
-    single_bar_size: self.single_bar_width, self.height - self.outline_width * 2
+    max_hp: 0
+    hp: 0
+    size: HEX_SIZE * VEHICLE_SIZE_MULTIPLIER * self.max_hp / MAX_HP_BARS, HEX_SIZE * 0.3
+    layout: layout_id
+    offset: (HEX_SIZE * VEHICLE_SIZE_MULTIPLIER - self.width) / 2
+    canvas:
+        Color:
+            rgba: 1, 1, 1, 0.5
+        Rectangle:
+            pos: self.x + self.offset, self.y
+            size: self.size
+    BoxLayout:
+        id: layout_id
+        pos: self.parent.x + self.parent.offset, self.parent.y
+        size: self.parent.size
+        orientation: 'horizontal'
+        padding: self.height * 0.15
+        spacing: self.height * 0.25
+
 
 
 <Vehicle>:
-    hp_bar: bar
-    size: HEX_SIZE *1.5,HEX_SIZE * 0.866025 * 1.5
+    x_coord: 0
+    y_coord: 0
+    hp_bar: bar_id
+    size: HEX_SIZE * VEHICLE_SIZE_MULTIPLIER, HEX_SIZE * 0.866025 * VEHICLE_SIZE_MULTIPLIER
+    x: self.x_coord * HEX_SIZE - self.width * 0.5
+    y: self.y_coord * HEX_SIZE - self.height * 0.5
     color: 1, 0, 0
     file: "assets/MT.png"
     canvas:
@@ -21,17 +48,23 @@
             rgb: self.color
         Rectangle:
             pos: self.center_x - self.width/2, self.center_y - self.height/2
-            size: self.size
+            size: HEX_SIZE * 1.5, HEX_SIZE * 0.866025 * 1.5
             source: self.file
+
     HPBar:
-        id: bar
+        id: bar_id
+        x: self.parent.x
+        y: self.parent.y - self.parent.height * 0.3
 
 
 <Hex>:
+    x_coord: 0
+    y_coord: 0
     side: HEX_SIZE
     size: self.side * 2, self.side * 0.866025 * 2
+    x: self.x_coord * self.side - self.width * 0.5
+    y: self.y_coord * self.side - self.height * 0.5
     color: 0.5, 0.5, 0.5
-
     canvas:
         Color:
             rgb: self.color
@@ -50,12 +83,7 @@
             close: True
 
 
-
-<WoTStratagyRoot>:
-
-    canvas:
-        Color:
-            rgb: 0, 0, 0
-        Rectangle:
-            pos: self.pos
-            size: self.size
+<WoTStrategyRoot>:
+    scatter: scatter_id
+    Scatter:
+        id: scatter_id

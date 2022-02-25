@@ -395,7 +395,7 @@ def game_loop(bot: Bot, game: GameSession):
     :param game:
     :return:
     """
-    while game_tick(bot, game) is not None:
+    while not game_tick(bot, game)["finished"]:
         pass
 
 
@@ -411,7 +411,7 @@ def game_tick(bot: Bot, game: GameSession):
     if game_state["finished"]:
         print("You won" if game_state["winner"] == game.player_id else "You lost")
         print(f"Winner: {game_state['winner']}")
-        return None
+        return game_state
 
     if game_state["current_player_idx"] == game.player_id:
         print(f'Round: {game_state["current_turn"]}, ' f"player: {game.player_name}")
