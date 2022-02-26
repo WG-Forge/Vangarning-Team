@@ -33,14 +33,16 @@
         spacing: self.height * 0.25
 
 
-
-<Vehicle>:
+<Entity>:
     x_coord: 0
     y_coord: 0
-    hp_bar: bar_id
-    size: HEX_SIZE * VEHICLE_SIZE_MULTIPLIER, HEX_SIZE * 0.866025 * VEHICLE_SIZE_MULTIPLIER
     x: self.x_coord * HEX_SIZE - self.width * 0.5
     y: self.y_coord * HEX_SIZE - self.height * 0.5
+
+
+<Vehicle>:
+    hp_bar: bar_id
+    size: HEX_SIZE * VEHICLE_SIZE_MULTIPLIER, HEX_SIZE * 0.866025 * VEHICLE_SIZE_MULTIPLIER
     color: 1, 0, 0
     file: "assets/MT.png"
     canvas:
@@ -48,7 +50,7 @@
             rgb: self.color
         Rectangle:
             pos: self.center_x - self.width/2, self.center_y - self.height/2
-            size: HEX_SIZE * 1.5, HEX_SIZE * 0.866025 * 1.5
+            size: self.size
             source: self.file
 
     HPBar:
@@ -58,12 +60,8 @@
 
 
 <Hex>:
-    x_coord: 0
-    y_coord: 0
     side: HEX_SIZE
     size: self.side * 2, self.side * 0.866025 * 2
-    x: self.x_coord * self.side - self.width * 0.5
-    y: self.y_coord * self.side - self.height * 0.5
     color: 0.5, 0.5, 0.5
     canvas:
         Color:
@@ -81,6 +79,19 @@
             points: self.x + self.side * 0.5, self.y, self.x, self.y + self.side * 0.866025, self.x + self.side * 0.5, self.y + self.side * 0.866025 * 2, self.x + self.side * 1.5, self.y + self.side * 0.866025 * 2, self.x + self.side * 2, self.y + self.side * 0.866025, self.x + self.side * 1.5, self.y
             width: 1
             close: True
+
+
+<SpecialHex>:
+    size: HEX_SIZE * 2, HEX_SIZE * 0.866025 * 2
+    color: 1, 1, 1
+    uses: 0
+    canvas:
+        Color:
+            rgb: self.color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+            source: self.file
 
 
 <WoTStrategyRoot>:
