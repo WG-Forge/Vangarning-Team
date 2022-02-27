@@ -2,7 +2,6 @@
 Simple functions to deal with hex coordinates transformations
 in a cubic coordinates system.
 """
-from typing import Union
 from settings import CoordsDict, CoordsTuple
 from vehicle import Vehicle
 

@@ -1,8 +1,9 @@
 import math
 import random
+from timeit import default_timer as timer
+
 from bot import SimpleBot
 from settings import TYPE_ORDER
-from timeit import default_timer as timer
 
 
 def get_possible_actions(game_state, vehicle_id):
@@ -113,7 +114,7 @@ class MonteCarloSearchTree:
         while not node.is_terminal() and node.have_all_children():
             node = node.get_most_valuable_child()
         if not node.is_terminal():
-            node = node.get_random_child()
+            return node.get_random_child()
         return node
 
     def simulation(self, node):
