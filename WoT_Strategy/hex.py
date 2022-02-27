@@ -4,6 +4,45 @@ in a cubic coordinates system.
 """
 from typing import Union
 from settings import CoordsDict, CoordsTuple
+from vehicle import Vehicle
+
+
+class Hex:
+    def __init__(self, pos: CoordsTuple):
+        self.x = pos[0]
+        self.y = pos[1]
+        self.z = pos[2]
+
+
+class HexWithVehicle(Hex):
+    def __init__(self, pos: CoordsTuple, vehicle: Vehicle):
+        super(self, pos)
+        self.vehicle = vehicle
+
+
+class Base(Hex):
+    def __init__(self, pos: CoordsTuple):
+        super(self, pos)
+
+
+class Obstacle(Hex):
+    def __init__(self, pos: CoordsTuple):
+        super(self, pos)
+
+
+class Light_repair(Hex):
+    def __init__(self, pos: CoordsTuple):
+        super(self, pos)
+
+
+class Hard_repair(Hex):
+    def __init__(self, pos: CoordsTuple):
+        super(self, pos)
+
+
+class Catapult(Hex):
+    def __init__(self, pos: CoordsTuple):
+        super(self, pos)
 
 
 def tuple_to_dict(pos: CoordsTuple) -> CoordsDict:
