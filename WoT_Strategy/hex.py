@@ -2,8 +2,46 @@
 Simple functions to deal with hex coordinates transformations
 in a cubic coordinates system.
 """
-from settings import CoordsDict, CoordsTuple, NEIGHBOURS_OFFSETS
-from typing import Optional
+from settings import CoordsDict, CoordsTuple
+from vehicle import Vehicle
+
+
+class Hex:
+    def __init__(self, pos: CoordsTuple):
+        self.x = pos[0]
+        self.y = pos[1]
+        self.z = pos[2]
+
+
+class HexWithVehicle(Hex):
+    def __init__(self, pos: CoordsTuple, vehicle: Vehicle):
+        super().__init__(pos)
+        self.vehicle = vehicle
+
+
+class Base(Hex):
+    def __init__(self, pos: CoordsTuple):
+        super().__init__(pos)
+
+
+class Obstacle(Hex):
+    def __init__(self, pos: CoordsTuple):
+        super().__init__(pos)
+
+
+class LightRepair(Hex):
+    def __init__(self, pos: CoordsTuple):
+        super().__init__(pos)
+
+
+class HardRepair(Hex):
+    def __init__(self, pos: CoordsTuple):
+        super().__init__(pos)
+
+
+class Catapult(Hex):
+    def __init__(self, pos: CoordsTuple):
+        super().__init__(pos)
 
 
 def tuple_to_dict(pos: CoordsTuple) -> CoordsDict:
@@ -57,10 +95,6 @@ def straight_dist(pos1: CoordsTuple, pos2: CoordsTuple) -> int:
 #     for k in range(1, max_len + 1):
 #         fringes.append([])
 #         for visited_hex in fringes[k-1]:
-
-
-
-
 
 def delta(pos1: CoordsTuple, pos2: CoordsTuple) -> CoordsTuple:
     """
