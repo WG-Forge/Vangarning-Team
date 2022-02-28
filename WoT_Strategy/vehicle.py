@@ -62,6 +62,9 @@ class AtSpg(Vehicle):
             return False
 
         return super().is_target_in_shooting_range(target)
+        # Count of shooting_range
+        dist = hex.straight_dist(self.position, target)
+        return self.shooting_range[0] <= dist <= self.shooting_range[1]
 
 
 class MediumTank(Vehicle):

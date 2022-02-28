@@ -15,33 +15,33 @@ class Hex:
 
 class HexWithVehicle(Hex):
     def __init__(self, pos: CoordsTuple, vehicle: Vehicle):
-        super(self, pos)
+        super().__init__(pos)
         self.vehicle = vehicle
 
 
 class Base(Hex):
     def __init__(self, pos: CoordsTuple):
-        super(self, pos)
+        super().__init__(pos)
 
 
 class Obstacle(Hex):
     def __init__(self, pos: CoordsTuple):
-        super(self, pos)
+        super().__init__(pos)
 
 
 class Light_repair(Hex):
     def __init__(self, pos: CoordsTuple):
-        super(self, pos)
+        super().__init__(pos)
 
 
 class Hard_repair(Hex):
     def __init__(self, pos: CoordsTuple):
-        super(self, pos)
+        super().__init__(pos)
 
 
 class Catapult(Hex):
     def __init__(self, pos: CoordsTuple):
-        super(self, pos)
+        super().__init__(pos)
 
 
 def tuple_to_dict(pos: CoordsTuple) -> CoordsDict:
