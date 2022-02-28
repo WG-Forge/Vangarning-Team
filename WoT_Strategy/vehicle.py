@@ -2,6 +2,7 @@
 Classes to describe different vehicle types.
 """
 import hex
+from settings import CoordsTuple
 
 
 class Vehicle:
@@ -34,15 +35,9 @@ class Vehicle:
         self.capture_points = data["capture_points"]
         self.hp = data["health"]
 
-    def is_target_in_shooting_range(self, target: tuple[int, int, int]) -> bool:
-        dist = hex.straight_dist(self.position, target)
+    def target_in_shooting_range(self, target: CoordsTuple, obstacles: set):
+        dist: int = hex.straight_dist(self.position, target)
         return self.shooting_range[0] <= dist <= self.shooting_range[1]
-
-    def can_shoot(self, target: tuple[int, int, int], obstacles=None):
-        if not self.is_target_in_shooting_range(target):
-            return False
-
-        return True
 
     def __str__(self):
         return str(self.pid)
@@ -56,12 +51,11 @@ class AtSpg(Vehicle):
         self.speed_points = 1
         self.shooting_range = (1, 3)
 
-    def is_target_in_shooting_range(self, target: tuple[int, int, int]) -> bool:
-        # If none of dx, dy, dz equals to 0
+    def target_in_shooting_range(self, target: CoordsTuple, obstacles: set):
         if 0 not in hex.delta(self.position, target):
             return False
 
-        return super().is_target_in_shooting_range(target)
+        return super().target_in_shooting_range(target, obstacles)
 
 
 class MediumTank(Vehicle):

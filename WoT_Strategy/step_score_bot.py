@@ -17,7 +17,6 @@ class StepScoreBot(Bot):
 
     def __init__(self, game_map: dict):
         super().__init__(game_map)
-        self.game_state: BotGameState = BotGameState(game_map)
 
     def get_actions(self, game_state: dict) -> list:
         actions = []

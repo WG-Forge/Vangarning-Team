@@ -2,7 +2,8 @@
 Simple functions to deal with hex coordinates transformations
 in a cubic coordinates system.
 """
-from settings import CoordsDict, CoordsTuple
+from settings import CoordsDict, CoordsTuple, NEIGHBOURS_OFFSETS
+from typing import Optional
 
 
 def tuple_to_dict(pos: CoordsTuple) -> CoordsDict:
@@ -29,7 +30,7 @@ def dict_to_tuple(pos: CoordsDict) -> CoordsTuple:
     return tuple(pos.values())
 
 
-def straight_dist(pos1: CoordsTuple, pos2: CoordsTuple) -> float:
+def straight_dist(pos1: CoordsTuple, pos2: CoordsTuple) -> int:
     """
     Calculates distance between two hexes.
 
@@ -37,7 +38,28 @@ def straight_dist(pos1: CoordsTuple, pos2: CoordsTuple) -> float:
     :param pos2: coordinates of second hex (x, y, z)
     :return: distance between pos1 and pos2
     """
-    return sum(map(lambda i: abs(i[0] - i[1]), zip(pos1, pos2))) / 2
+    return int(sum(map(lambda i: abs(i[0] - i[1]), zip(pos1, pos2))) / 2)
+
+
+# def is_hex_reachable(
+#         position: CoordsTuple,
+#         target: CoordsTuple,
+#         max_len: int,
+#         obstacles: Optional[set] = None
+# ) -> bool:
+#     if obstacles is None:
+#         return straight_dist(position, target) <= max_len
+#
+#     visited = set()
+#     visited.add(position)
+#     fringes = [[position]]
+#
+#     for k in range(1, max_len + 1):
+#         fringes.append([])
+#         for visited_hex in fringes[k-1]:
+
+
+
 
 
 def delta(pos1: CoordsTuple, pos2: CoordsTuple) -> CoordsTuple:
