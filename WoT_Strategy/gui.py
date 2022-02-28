@@ -111,8 +111,8 @@ class Vehicle(Entity):
     Vehicle widget
     """
 
-    file: str
     hp_bar = ObjectProperty(0)
+    file: str
 
 
 class Hex(Entity):
@@ -128,9 +128,9 @@ class SpecialHex(Entity):
     Special hex widget
     """
 
-    file: str
     uses = NumericProperty(0)
     type = ""
+    file: str
 
     def on_uses(self, _instance, value):
         """
@@ -159,8 +159,8 @@ def create_hexes(map_data: dict):
     """
     for cube_x in range(-map_data["size"], map_data["size"] + 1):
         for cube_y in range(
-            max(-map_data["size"], -map_data["size"] - cube_x),
-            min(map_data["size"] + 1, map_data["size"] - cube_x + 1),
+                max(-map_data["size"], -map_data["size"] - cube_x),
+                min(map_data["size"] + 1, map_data["size"] - cube_x + 1),
         ):
             cube_coords_tuple = (cube_x, cube_y, -cube_x - cube_y)
             new_hex = Hex()
@@ -243,9 +243,9 @@ class WoTStrategyRoot(Widget):
                 create_special_hex(hard_repair_cube_coords, "hard_repair")
             )
         for catapult_cube_coords in map_data["content"]["catapult"]:
-            self.scatter.add_widget(
-                create_special_hex(catapult_cube_coords, "catapult")
-            )
+            catapult = create_special_hex(catapult_cube_coords, "catapult")
+            self.consumables[dict_to_tuple(catapult_cube_coords)] = catapult
+            self.scatter.add_widget(catapult)
 
     def size_setter(self, _instance, width, height):
         """
@@ -279,9 +279,7 @@ class WoTStrategyRoot(Widget):
                 self.add_vehicle(vehicle_id, vehicle_data)
             vehicle = self.vehicles[vehicle_id]
 
-            pos_x, pos_y = cube_to_cartesian(dict_to_tuple(vehicle_data["position"]))
-            vehicle.x_coord = pos_x
-            vehicle.y_coord = pos_y
+            vehicle.coords = cube_to_cartesian(dict_to_tuple(vehicle_data["position"]))
 
             vehicle.hp_bar.hp = vehicle_data["health"]
 
