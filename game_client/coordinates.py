@@ -17,12 +17,13 @@ class Coords:
 
     def __init__(self, coordinates: Union[CoordsDictTyping, CoordsTupleTyping]):
         if isinstance(coordinates, dict):
-            coordinates = tuple(coordinates.values())
+            # noinspection PyTypeChecker
+            coordinates: CoordsTupleTyping = tuple(coordinates.values())
 
-        self.coordinates: CoordsTupleTyping = coordinates
+        self.coordinates = coordinates
         self.max_dimension: int = max([abs(i) for i in self.coordinates])
 
-    def __eq__(self, other: Coords):
+    def __eq__(self, other):
         return self.coordinates == other.coordinates
 
     def __hash__(self):
@@ -50,7 +51,7 @@ class Coords:
 
         raise TypeError("Can only subtract Coords instance")
 
-    def __mul__(self, other: Union[int, float]) -> Coords:
+    def __mul__(self, other) -> Coords:
         if isinstance(other, int):
             # noinspection PyTypeChecker
             return Coords(tuple(map(lambda x: other * x, self.coordinates)))

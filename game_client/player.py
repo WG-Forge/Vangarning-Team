@@ -13,6 +13,7 @@ class Player:
     Class to describe player instance.
 
     """
+
     def __init__(self, data: PlayerDictTyping):
         """
         :param data: piece of GAME_STATE response from the server.
@@ -63,17 +64,19 @@ class Player:
         """
         Updates information about possible targets.
 
+
         :param attack_matrix: piece of GAME_STATE response from the server
         """
         result: set[int] = {int(i) for i in attack_matrix.keys()}
         can_attack: set[int] = set()
         cannot_attack: set[int] = {self.idx}
         for player, data in attack_matrix.items():
-            player = int(player)
-            if player == self.idx:
+            if int(player) == self.idx:
                 continue
             if self.idx in data:
-                can_attack.add(player)
+                can_attack.add(int(player))
             cannot_attack |= set(data)
 
+        # Subtract players who were attacked from all players and then
+        # add players who attacked us to the result
         self.can_attack_ids = list(result - cannot_attack | can_attack)

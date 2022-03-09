@@ -1,14 +1,27 @@
+"""
+Contains classes and enums needed to interact with the server.
+
+"""
+
 import json
 import socket
 import struct
 from enum import IntEnum
 from typing import Optional, Union
 
+from game_client.custom_typings import (CoordsDictTyping, GameStateDictTyping,
+                                        MapDictTyping, PlayerDictTyping)
+
 HOST = "wgforge-srv.wargaming.net"
 PORT = 443
 
 
 class ActionCode(IntEnum):
+    """
+    Server action codes.
+
+    """
+
     LOGIN = 1
     LOGOUT = 2
     MAP = 3
@@ -21,6 +34,11 @@ class ActionCode(IntEnum):
 
 
 class ResponseCode(IntEnum):
+    """
+    Server response codes.
+
+    """
+
     OK = 0
     BAD_COMMAND = 1
     ACCESS_DENIED = 2
@@ -30,11 +48,16 @@ class ResponseCode(IntEnum):
 
 
 class ResponseError(Exception):
-    pass
+    """
+    Raised if response code != OK.
+
+    """
 
 
 class WrongPayloadFormatError(Exception):
-    pass
+    """
+    Raised before sending request to server if wrong payload was provided.
+    """
 
 
 class Session:
@@ -60,13 +83,25 @@ class Session:
         self.client_socket.close()
 
     def __recvall(self, length):
+        """
+        Calls socket.recv method until exactly length bytes are received.
+
+        """
         result = b""
         while len(result) != length:
             result += self.client_socket.recv(length - len(result))
 
         return result
 
-    def __generate_message(self, code: int, data: Optional[dict] = None):
+    @staticmethod
+    def __generate_message(code: int, data: Optional[dict] = None) -> bytes:
+        """
+        Creates bytes string based on action code and data.
+
+        :param code: action code
+        :param data: payload
+        :return: bytes string in server format
+        """
         if data is None:
             return struct.pack("<ii", code, 0)
 
@@ -134,15 +169,19 @@ class GameSession:
         """
         self.__validate_login_info(login_info)
 
-        self.server = Session(HOST, PORT)
-        login_response = self.server.get(ActionCode.LOGIN, login_info)
+        self.server: Session = Session(HOST, PORT)
+        login_response: PlayerDictTyping = self.server.get(ActionCode.LOGIN, login_info)
 
-        self.player_id = login_response["idx"]
-        self.player_name = login_response["name"]
-        self.map = self.server.get(ActionCode.MAP)
+        self.player_id: int = login_response["idx"]
+        self.player_name: str = login_response["name"]
+        self.map: MapDictTyping = self.server.get(ActionCode.MAP)
 
     @staticmethod
     def __validate_login_info(login_info: dict):
+        """
+        Makes sure that login info has valid format.
+
+        """
         valid_fields = (
             "name",
             "password",
@@ -161,21 +200,44 @@ class GameSession:
                     f"Field {var}: {login_info[var]} is not valid login field."
                 )
 
-    def game_state(self) -> dict:
+    def game_state(self) -> GameStateDictTyping:
+        """
+        GAME_STATE server request.
+
+        """
         return self.server.get(ActionCode.GAME_STATE)
 
     def game_actions(self) -> dict:
+        """
+        GAME_ACTIONS server request.
+
+        """
         return self.server.get(ActionCode.GAME_ACTIONS)
 
     def turn(self) -> dict:
+        """
+        TURN server request.
+
+        """
         return self.server.get(ActionCode.TURN)
 
     def chat(self, message: str) -> dict:
+        """
+        CHAT server request.
+
+        """
         return self.server.get(ActionCode.CHAT, {"message": message})
 
     def action(
-        self, action: Union[ActionCode, int], vehicle_id: int, target: dict
+        self, action: Union[ActionCode, int], vehicle_id: int, target: CoordsDictTyping
     ) -> dict:
+        """
+        ACTION server request.
+
+        :param action: action code
+        :param vehicle_id: id of the acting vehicle
+        :param target: target hex
+        """
         payload = {
             "vehicle_id": vehicle_id,
             "target": target,
@@ -183,4 +245,8 @@ class GameSession:
         return self.server.get(action, payload)
 
     def logout(self) -> dict:
+        """
+        LOGOUT server request.
+
+        """
         return self.server.get(ActionCode.LOGOUT)

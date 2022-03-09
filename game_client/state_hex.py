@@ -11,6 +11,7 @@ class GSHex:
 
     Contains info about location, type and vehicle located on the hex.
     """
+
     __slots__ = ("coords", "map_hex", "vehicle")
 
     def __init__(self, coords, map_hex, vehicle=None):

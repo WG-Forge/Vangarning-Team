@@ -9,7 +9,7 @@ from typing import Optional
 from game_client.coordinates import Coords
 from game_client.custom_exceptions import OutOfBoundsError
 from game_client.custom_typings import (CoordsDictTyping, GameStateDictTyping,
-                                        VehicleDictTyping)
+                                        MapDictTyping, VehicleDictTyping)
 from game_client.map import GameMap
 from game_client.player import Player
 from game_client.state_hex import GSHex
@@ -24,7 +24,7 @@ class GameState:
 
     # pylint: disable=too-many-instance-attributes
     # Nine is reasonable in this case.
-    def __init__(self, game_map: dict):
+    def __init__(self, game_map: MapDictTyping):
         """
         :param game_map: MAP response from the server.
         """
@@ -36,7 +36,8 @@ class GameState:
         self.players: dict[int, Player] = {}
         self.vehicles: dict[Coords, Vehicle] = {}
         self.spawn_points: list[Coords] = []
-        self.prev_server_state: Optional[GameStateDictTyping] = {}
+        # noinspection PyTypeChecker
+        self.prev_server_state: GameStateDictTyping = {}
 
     def update(self, data: GameStateDictTyping) -> None:
         """
@@ -88,7 +89,9 @@ class GameState:
             self.players[int(player["idx"])] = Player(player)
 
         for vid, vehicle in data["vehicles"].items():
-            vehicle_obj = VEHICLE_CLASSES[vehicle["vehicle_type"]](vid, vehicle)
+            vehicle_obj: Vehicle = VEHICLE_CLASSES[vehicle["vehicle_type"]](
+                int(vid), vehicle
+            )
             self.vehicles[vehicle_obj.position] = vehicle_obj
             self.players[vehicle_obj.player_id].add_vehicle(vehicle_obj)
             self.spawn_points.append(vehicle_obj.spawn_position)
@@ -103,9 +106,9 @@ class GameState:
             player.update(data["win_points"][str(idx)], data["attack_matrix"])
 
         for vid, vehicle in data["vehicles"].items():
-            self.__update_vehicle(int(vid), vehicle)
+            self.__update_vehicle(vid, vehicle)
 
-    def __update_vehicle(self, vid: int, vehicle: VehicleDictTyping) -> None:
+    def __update_vehicle(self, vid: str, vehicle: VehicleDictTyping) -> None:
         """
         Changes vehicle position in self.vehicles and calls vehicle's update method.
 
