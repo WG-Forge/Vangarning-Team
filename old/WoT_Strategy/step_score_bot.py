@@ -1,10 +1,10 @@
 from typing import Optional
 
-import hex
+import hexes
 from bot import Bot
-from game_client import Action, BotGameState
+from game_client import Action
 from server_interaction import ActionCode
-from settings import NEIGHBOURS_OFFSETS, HexCode
+from settings import NEIGHBOURS_OFFSETS, HexCode, CoordsTuple
 from vehicle import AtSpg, Vehicle
 
 
@@ -37,7 +37,6 @@ class StepScoreBot(Bot):
 
         return None
 
-    # Will be moved to Vehicles classes
     def _get_possible_steps(self, actor: Vehicle) -> list:
         if isinstance(actor, AtSpg):
             steps = self._get_possible_atspg_steps(actor)
@@ -66,20 +65,17 @@ class StepScoreBot(Bot):
     def _get_possible_atspg_steps(self, actor: AtSpg) -> list:
         steps = []
 
-        for offset in NEIGHBOURS_OFFSETS[0]:
-            coords = hex.summarize(offset, actor.position)
-            if not self.game_state.are_valid_coords(coords):
-                continue
+        for neighbour in self.game_state.get_neighbours(actor.position):
 
-            if self.game_state.can_move(actor, coords):
-                steps.append(Action(ActionCode.MOVE, actor, coords))
+            if self.game_state.can_move(actor, neighbour):
+                steps.append(Action(ActionCode.MOVE, actor, neighbour))
 
-            normal = hex.unit_vector(actor.position, coords)
+            normal = hexes.unit_vector(actor.position, neighbour)
 
             affected_vehicles: list[Vehicle] = []
 
             for i in range(1, 4):
-                target = hex.summarize(actor.position, hex.multiply(i, normal))
+                target = hexes.summarize(actor.position, hexes.multiply(i, normal))
                 if self.game_state.get_hex_value(target) == HexCode.OBSTACLE:
                     break
                 if self.game_state.can_shoot(actor, target):
@@ -90,7 +86,7 @@ class StepScoreBot(Bot):
 
             if affected_vehicles:
                 steps.append(
-                    Action(ActionCode.SHOOT, actor, coords, *affected_vehicles)
+                    Action(ActionCode.SHOOT, actor, neighbour, *affected_vehicles)
                 )
 
         return steps
@@ -98,14 +94,13 @@ class StepScoreBot(Bot):
     def _generate_valid_neighbours_coords(self, position, distance) -> list:
         result = []
         for offset in NEIGHBOURS_OFFSETS[distance - 1]:
-            coords: tuple[int, int, int] = hex.summarize(offset, position)
+            coords: tuple[int, int, int] = hexes.summarize(offset, position)
             if self.game_state.are_valid_coords(coords):
                 result.append(coords)
 
         return result
 
-    # Will be moved to Vehicles classes
-    def _get_step(self, actor: Vehicle, coords: tuple[int, int, int]):
+    def _get_step(self, actor: Vehicle, coords: CoordsTuple):
         if self.game_state.can_shoot(actor, coords):
             affected_vehicle = self.game_state.get_vehicle_by_id(
                 self.game_state.get_hex_value(coords)
@@ -125,7 +120,7 @@ class StepScoreBot(Bot):
         close_enemies = self.game_state.get_close_enemies(actor.position)
 
         ntd = len(close_enemies) / actor.hp
-        dbc = 1 / (1 + hex.straight_dist(position, (0, 0, 0)))
+        dbc = 1 / (1 + hexes.straight_dist(position, (0, 0, 0)))
 
         result = ntd + dbc
 

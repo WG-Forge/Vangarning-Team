@@ -5,6 +5,15 @@ in a cubic coordinates system.
 from settings import CoordsDict, CoordsTuple
 from vehicle import Vehicle
 
+DIRECTIONS = (
+    (1, -1, 0),
+    (1, 0, -1),
+    (0, 1, -1),
+    (-1, 1, 0),
+    (-1, 0, 1),
+    (0, -1, 1),
+)
+
 
 class Hex:
     def __init__(self, pos: CoordsTuple):
@@ -79,23 +88,6 @@ def straight_dist(pos1: CoordsTuple, pos2: CoordsTuple) -> int:
     return int(sum(map(lambda i: abs(i[0] - i[1]), zip(pos1, pos2))) / 2)
 
 
-# def is_hex_reachable(
-#         position: CoordsTuple,
-#         target: CoordsTuple,
-#         max_len: int,
-#         obstacles: Optional[set] = None
-# ) -> bool:
-#     if obstacles is None:
-#         return straight_dist(position, target) <= max_len
-#
-#     visited = set()
-#     visited.add(position)
-#     fringes = [[position]]
-#
-#     for k in range(1, max_len + 1):
-#         fringes.append([])
-#         for visited_hex in fringes[k-1]:
-
 def delta(pos1: CoordsTuple, pos2: CoordsTuple) -> CoordsTuple:
     """
 
@@ -145,3 +137,42 @@ def summarize(pos1: CoordsTuple, pos2: CoordsTuple) -> CoordsTuple:
     :return: coordinates (x1 + x2, y1 + y2, z1 + z2)
     """
     return tuple(map(sum, zip(pos1, pos2)))
+
+
+def get_ring(center: CoordsTuple, radius: int) -> list[CoordsTuple]:
+    """
+    Returns list of hexes which form ring around center with given radius.
+
+    :param center: center of the ring
+    :param radius: radius of the ring (distance from the center)
+    :return: list of hexes which form the ring
+    """
+    if radius == 0:
+        return [center]
+
+    result = []
+    neighbour = summarize(
+        center, multiply(radius, DIRECTIONS[4])
+    )  # Starting from bottom-left diagonal hex
+    for i in range(6):  # going anticlockwise
+        for j in range(radius):
+            result.append(neighbour)
+            neighbour = summarize(neighbour, DIRECTIONS[i])
+
+    return result
+
+
+def get_spiral_ring(center: CoordsTuple, outer_rad, inner_rad=1) -> list[CoordsTuple]:
+    """
+    Returns hexes which form spiral ring with given inner and outer radius.
+
+    :param center: center of the ring
+    :param outer_rad: outer radius of the ring
+    :param inner_rad: inner radius of the ring
+    :return: list of hexes which form spiral ring
+    """
+    result = []
+    for radius in range(inner_rad, outer_rad + 1):
+        result.append(*get_ring(center, radius))
+
+    return result

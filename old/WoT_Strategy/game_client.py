@@ -1,9 +1,9 @@
 """
 Contains class for Game state and functions to play the game.
 """
-from typing import Union
+from typing import Union, Iterator
 
-import hex
+import hexes
 from server_interaction import ActionCode, GameSession
 from settings import (NEIGHBOURS_OFFSETS, TYPE_ORDER, CoordsDict, CoordsTuple,
                       HexCode)
@@ -40,7 +40,7 @@ class Action:
         """
         Returns action in server format: ActionCode + actor id + target hex.
         """
-        return self.action_code, self.actor.pid, hex.tuple_to_dict(self.target)
+        return self.action_code, self.actor.pid, hexes.tuple_to_dict(self.target)
 
     @property
     def affected_vehicles(self):
@@ -48,6 +48,60 @@ class Action:
         Returns list of affected vehicles objects.
         """
         return self.__affected_vehicles
+
+
+class GameMap:
+    """
+    Contains static information about game map.
+
+    
+    """
+    def __init__(self, game_map: dict):
+        self.map_radius: int = game_map["size"]
+        self.map_name: str = game_map["name"]
+        self.base: list[CoordsTuple] = ...
+        self.obstacles = ...
+        self.light_repairs: list[CoordsTuple] = ...
+        self.hard_repairs: list[CoordsTuple] = ...
+        self.catapults: list[CoordsTuple] = ...
+        self.spawn_positions: list[CoordsTuple] = []
+
+    def is_obstacle(self, position: CoordsTuple):
+        return position in self.obstacles
+
+    def is_base(self, position: CoordsTuple):
+        return position in self.base
+
+    def is_light_repair(self, position: CoordsTuple):
+        return position in self.light_repairs
+
+    def is_hard_repair(self, position: CoordsTuple):
+        return position in self.hard_repairs
+
+    def is_catapult(self, position: CoordsTuple):
+        return position in self.catapults
+
+    def is_spawn_position(self, position: CoordsTuple):
+        return position in self.spawn_positions
+
+    def are_valid_coords(self, coords: CoordsTuple) -> bool:
+        """
+        Tells if hex with given coordinates is in map boundaries.
+
+        """
+        return max(map(abs, coords)) < self.map_radius
+
+    def get_hexes_on_dist(
+            self, position: CoordsTuple, dist: int
+    ) -> Iterator[CoordsTuple]:
+        """
+        Creates iterator with hexes at given distance from the position.
+
+        """
+        return filter(
+            lambda pos: self.are_valid_coords(pos),
+            hexes.get_ring(position, dist)
+        )
 
 
 class BotGameState:
@@ -60,11 +114,7 @@ class BotGameState:
         """
         :param game_map: MAP response from the server
         """
-        # Map info
-        self.map_radius: int = game_map["size"]
-        self.map_name: str = game_map["name"]
-        self.base, self.obstacles = self.__parse_map_content(game_map)
-        self.spawn_positions: set = set()
+        self.map = GameMap(game_map)
 
         # Game state info
         self.is_game_state_populated = False
@@ -159,8 +209,8 @@ class BotGameState:
                 player_id=vehicle["player_id"],
                 pid=vid,
                 hp=vehicle["health"],
-                spawn_position=hex.dict_to_tuple(vehicle["spawn_position"]),
-                position=hex.dict_to_tuple(vehicle["position"]),
+                spawn_position=hexes.dict_to_tuple(vehicle["spawn_position"]),
+                position=hexes.dict_to_tuple(vehicle["position"]),
                 capture_points=vehicle["capture_points"],
             )
             self.vehicles_to_players[vehicle_obj.player_id].append(vehicle_id)
@@ -181,65 +231,6 @@ class BotGameState:
                 del self.vehicles_positions[self.vehicles[vehicle_id].position]
             self.vehicles[vehicle_id].update(vehicle)
             self.vehicles_positions[tuple(vehicle["position"].values())] = vehicle_id
-
-    def __parse_map_content(self, game_map: dict) -> tuple[set[tuple], set[tuple]]:
-        """
-        Puts info about all game content to instances attributes.
-
-        :param game_map: MAP server response
-        :return: two sets with hexes corresponding to exact content type
-        """
-        obstacles = set(tuple(i.values()) for i in game_map["content"]["obstacle"])
-        base = set(tuple(i.values()) for i in game_map["content"]["base"])
-
-        return base, obstacles
-
-    def __get_neighbours(self, coords: CoordsTuple):
-        """
-        Help function for A* search returns all 6 closest neighbours.
-
-        :param coords:
-        :return:
-        """
-        neighbours = []
-
-        for offset in NEIGHBOURS_OFFSETS[0]:
-            neighbour = hex.summarize(coords, offset)
-            if self.are_valid_coords(neighbour):
-                neighbours.append(neighbour)
-
-        return neighbours
-
-    def is_hex_reachable(self, actor: Vehicle, target: CoordsTuple) -> bool:
-        """
-        Tells if actor can reach target hex considering obstacles.
-
-        """
-        if hex.straight_dist(actor.position, target) > actor.speed_points:
-            return False
-
-        visited = set()
-        visited.add(actor.position)
-        fringes = [[actor.position]]
-
-        for k in range(1, actor.speed_points + 1):
-            fringes.append([])
-            for visited_hex in fringes[k - 1]:
-                for neighbour in self.__get_neighbours(visited_hex):
-                    if neighbour == target:
-                        return True
-                    if neighbour not in visited and neighbour not in self.obstacles:
-                        visited.add(neighbour)
-                        fringes[k].append(neighbour)
-
-        return False
-
-    def are_valid_coords(self, coords: CoordsTuple) -> bool:
-        """
-        Tells if hex with given coordinates is in map boundaries.
-
-        """
-        return max(map(abs, coords)) < self.map_radius
 
     def get_hex_value(self, coords: CoordsTuple) -> Union[HexCode, int]:
         """
@@ -356,7 +347,7 @@ class BotGameState:
         enemies = []
         for dist in NEIGHBOURS_OFFSETS:
             for offset in dist:
-                neighbour_pos = hex.summarize(position, offset)
+                neighbour_pos = hexes.summarize(position, offset)
                 if self.is_vehicle(neighbour_pos):
                     enemy = self.vehicles[self.vehicles_positions[neighbour_pos]]
                     if self.can_shoot(enemy, position):

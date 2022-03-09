@@ -1,7 +1,7 @@
 """
 Classes to describe different vehicle types.
 """
-import hex
+import hexes
 from settings import CoordsTuple
 
 
@@ -31,12 +31,12 @@ class Vehicle:
         Updates object from dictionary.
 
         """
-        self.position = hex.dict_to_tuple(data["position"])
+        self.position = hexes.dict_to_tuple(data["position"])
         self.capture_points = data["capture_points"]
         self.hp = data["health"]
 
     def target_in_shooting_range(self, target: CoordsTuple, obstacles: set):
-        dist: int = hex.straight_dist(self.position, target)
+        dist: int = hexes.straight_dist(self.position, target)
         return self.shooting_range[0] <= dist <= self.shooting_range[1]
 
     def __str__(self):
@@ -52,7 +52,7 @@ class AtSpg(Vehicle):
         self.shooting_range = (1, 3)
 
     def target_in_shooting_range(self, target: CoordsTuple, obstacles: set):
-        if 0 not in hex.delta(self.position, target):
+        if 0 not in hexes.delta(self.position, target):
             return False
 
         return super().target_in_shooting_range(target, obstacles)
