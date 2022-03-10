@@ -27,6 +27,7 @@ class StaticHex(Hex, metaclass=SingletonMeta):
     """
 
     can_go_through: bool = True
+    can_shoot_through: bool = True
     can_stay: bool = True
 
 
@@ -37,6 +38,7 @@ class UsableHex(Hex):
     """
 
     can_go_through: bool = True
+    can_shoot_through: bool = True
     can_stay: bool = True
     uses_left: int = 3
 
@@ -57,27 +59,32 @@ class UsableHex(Hex):
 
 class EmptyHex(StaticHex):
     can_go_through: bool = True
+    can_shoot_through: bool = True
     can_stay: bool = True
 
 
 class Obstacle(StaticHex):
     can_go_through: bool = False
+    can_shoot_through: bool = False
     can_stay: bool = False
 
 
 class Base(StaticHex):
     can_go_through: bool = True
+    can_shoot_through: bool = True
     can_stay: bool = True
 
 
 class LightRepair(StaticHex):
     can_go_through: bool = True
+    can_shoot_through: bool = True
     can_stay: bool = True
     served_classes: tuple = (MediumTank,)
 
 
 class HardRepair(StaticHex):
     can_go_through: bool = True
+    can_shoot_through: bool = True
     can_stay: bool = True
     served_classes: tuple = (
         HeavyTank,
@@ -87,6 +94,7 @@ class HardRepair(StaticHex):
 
 class Catapult(UsableHex):
     can_go_through: bool = True
+    can_shoot_through: bool = True
     can_stay: bool = True
     uses_left: int = 3
 

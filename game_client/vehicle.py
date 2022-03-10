@@ -15,7 +15,7 @@ class Vehicle:
     # Eleven is reasonable in this case.
     def __init__(self, vehicle_id: int, data: VehicleDictTyping):
         """
-        :param vehicle_id: vehicle id
+        :param vehicle_id: actor id
         :param data: part of GAME_STATE response from the server
         """
         # Data updated from game_state
@@ -33,6 +33,7 @@ class Vehicle:
         self.max_hp: int = 1
         self.speed_points: int = 0
         self.distances_to_check: tuple[int, ...] = (1,)
+        self.shoots_flat = False
 
     def update(self, data: VehicleDictTyping) -> None:
         """
@@ -59,7 +60,7 @@ class Vehicle:
 
 class AtSpg(Vehicle):
     """
-    Class to describe AtSpg vehicle type.
+    Class to describe AtSpg actor type.
 
     """
 
@@ -71,6 +72,7 @@ class AtSpg(Vehicle):
         self.speed_points: int = 1
         self.shooting_range: tuple[int, int] = (1, 3)
         self.distances_to_check: tuple[int, ...] = (1, 2, 3)
+        self.shoots_flat = True
 
     def target_in_shooting_range(self, target: Coords):
         if 0 not in self.position.delta(target):
@@ -81,7 +83,7 @@ class AtSpg(Vehicle):
 
 class MediumTank(Vehicle):
     """
-    Class to describe Medium Tank vehicle type.
+    Class to describe Medium Tank actor type.
 
     """
 
@@ -93,11 +95,12 @@ class MediumTank(Vehicle):
         self.speed_points: int = 2
         self.shooting_range: tuple[int, int] = (2, 2)
         self.distances_to_check: tuple[int, ...] = (1, 2)
+        self.shoots_flat = False
 
 
 class LightTank(Vehicle):
     """
-    Class to describe Light Tank vehicle type.
+    Class to describe Light Tank actor type.
 
     """
 
@@ -109,11 +112,12 @@ class LightTank(Vehicle):
         self.speed_points: int = 3
         self.shooting_range: tuple[int, int] = (2, 2)
         self.distances_to_check: tuple[int, ...] = (1, 2, 3)
+        self.shoots_flat = False
 
 
 class HeavyTank(Vehicle):
     """
-    Class to describe Heavy Tank vehicle type.
+    Class to describe Heavy Tank actor type.
 
     """
 
@@ -125,11 +129,12 @@ class HeavyTank(Vehicle):
         self.speed_points: int = 1
         self.shooting_range: tuple[int, int] = (1, 2)
         self.distances_to_check: tuple[int, ...] = (1, 2)
+        self.shoots_flat = False
 
 
 class Spg(Vehicle):
     """
-    Class to describe Spg vehicle type.
+    Class to describe Spg actor type.
 
     """
 
@@ -141,6 +146,7 @@ class Spg(Vehicle):
         self.speed_points: int = 1
         self.shooting_range: tuple[int, int] = (3, 3)
         self.distances_to_check: tuple[int, ...] = (1, 3)
+        self.shoots_flat = False
 
 
 VEHICLE_CLASSES = {

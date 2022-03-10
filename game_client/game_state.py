@@ -32,12 +32,12 @@ class GameState:
         self.finished: bool = False
         self.num_turns: int = -1
         self.current_turn: int = -1
-        self.current_player_idx: int = -1
+        self.current_player: Optional[Player] = None
         self.players: dict[int, Player] = {}
         self.vehicles: dict[Coords, Vehicle] = {}
         self.spawn_points: list[Coords] = []
         # noinspection PyTypeChecker
-        self.prev_server_state: GameStateDictTyping = {}
+        self.prev_game_state: GameStateDictTyping = {}
 
     def update(self, data: GameStateDictTyping) -> None:
         """
@@ -53,7 +53,7 @@ class GameState:
         self.__update_catapults(data["catapult_usage"])
 
         self.current_turn = data["current_turn"]
-        self.current_player_idx = data["current_player_idx"]
+        self.current_player = self.players[data["current_player_idx"]]
 
         self.prev_server_state = data
 
@@ -68,6 +68,7 @@ class GameState:
             return GSHex(
                 coordinates,
                 self.game_map[coordinates],
+                coordinates in self.spawn_points,
                 self.__get_vehicle_or_none(coordinates),
             )
 
@@ -98,7 +99,7 @@ class GameState:
 
     def __update_players_vehicles(self, data: GameStateDictTyping) -> None:
         """
-        Calls update methods for each player and vehicle.
+        Calls update methods for each player and actor.
 
         :param data: GAME_STATE response from the server
         """
@@ -110,10 +111,10 @@ class GameState:
 
     def __update_vehicle(self, vid: str, vehicle: VehicleDictTyping) -> None:
         """
-        Changes vehicle position in self.vehicles and calls vehicle's update method.
+        Changes actor position in self.vehicles and calls actor's update method.
 
-        :param vid: vehicle id
-        :param vehicle: part of GAME_STATE response with an info about the vehicle
+        :param vid: actor id
+        :param vehicle: part of GAME_STATE response with an info about the actor
         """
         new_pos = Coords(vehicle["position"])
         prev_pos = Coords(self.prev_server_state["vehicles"][vid]["position"])
@@ -134,7 +135,7 @@ class GameState:
 
     def __get_vehicle_or_none(self, coords: Coords) -> Optional[Vehicle]:
         """
-        Return vehicle at the given position if there is any or None.
+        Return actor at the given position if there is any or None.
 
         :param coords: Coords object
         :return: Vehicle object located at the given position or None

@@ -235,7 +235,7 @@ class GameSession:
         ACTION server request.
 
         :param action: action code
-        :param vehicle_id: id of the acting vehicle
+        :param vehicle_id: id of the acting actor
         :param target: target hex
         """
         payload = {
