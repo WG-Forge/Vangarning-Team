@@ -35,7 +35,7 @@ class Vehicle:
         self.capture_points = data["capture_points"]
         self.hp = data["health"]
 
-    def target_in_shooting_range(self, target: CoordsTuple, obstacles: set):
+    def target_in_shooting_range(self, target: CoordsTuple):
         dist: int = hexes.straight_dist(self.position, target)
         return self.shooting_range[0] <= dist <= self.shooting_range[1]
 
@@ -51,11 +51,11 @@ class AtSpg(Vehicle):
         self.speed_points = 1
         self.shooting_range = (1, 3)
 
-    def target_in_shooting_range(self, target: CoordsTuple, obstacles: set):
+    def target_in_shooting_range(self, target: CoordsTuple):
         if 0 not in hexes.delta(self.position, target):
             return False
 
-        return super().target_in_shooting_range(target, obstacles)
+        return super().target_in_shooting_range(target)
 
 
 class MediumTank(Vehicle):

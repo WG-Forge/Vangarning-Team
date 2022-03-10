@@ -1,6 +1,7 @@
 import json
 import socket
 import struct
+import time
 from enum import IntEnum
 from typing import Optional, Union
 
@@ -108,6 +109,23 @@ class Session:
         return received_data
 
 
+class GameStateLogger:
+    """
+      Class for replay the game
+
+    """
+
+    def __init__(self, file_name):
+        self.log_file = open(file_name, "w")
+
+    def log_game_state(self, game_state):
+        self.log_file.write(json.dumps(game_state))
+        self.log_file.write('\n')
+
+    def __del__(self):
+        self.log_file.close()
+
+
 class GameSession:
     """
     Handles interaction with server throughout one game session.
@@ -141,6 +159,10 @@ class GameSession:
         self.player_name = login_response["name"]
         self.map = self.server.get(ActionCode.MAP)
         self.__game_state = None
+        self.logger = GameStateLogger(f"log_game_{time.time()}.txt")
+
+    def get_game_state_logger(self):
+        return self.logger
 
     def __validate_login_info(self, login_info: dict):
         valid_fields = (
@@ -184,3 +206,6 @@ class GameSession:
 
     def logout(self) -> dict:
         return self.server.get(ActionCode.LOGOUT)
+
+    def __del__(self):
+        self.log_file.close()
