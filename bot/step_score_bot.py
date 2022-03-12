@@ -6,7 +6,7 @@ from game_client.action import Action
 from game_client.server_interaction import ActionCode
 from game_client.vehicle import AtSpg, Vehicle
 from game_client.state_hex import GSHex
-from game_client.coordinates import Coords
+from utility.coordinates import Coords
 
 
 class StepScoreBot(Bot):

@@ -3,8 +3,8 @@ Contains class for game state's get_hex method's return value.
 """
 from typing import Union
 
-from game_client.coordinates import Coords
-from game_client.map_hexes import StaticHex, UsableHex
+from utility.coordinates import Coords
+from game_client.map_hexes import StaticHex, LimitedBonusHex
 from game_client.vehicle import Vehicle
 
 
@@ -25,7 +25,7 @@ class GSHex:
         :param is_spawn_point: if hex with given coords is a spawn point
         """
         self.coords: Coords = coords
-        self.map_hex: Union[StaticHex, UsableHex] = map_hex
+        self.map_hex: Union[StaticHex, LimitedBonusHex] = map_hex
         self.is_spawn_point = is_spawn_point
         self.vehicle: Vehicle = vehicle
 

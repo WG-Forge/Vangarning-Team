@@ -6,7 +6,7 @@ Contains class to store game state.
 
 from typing import Optional
 
-from game_client.coordinates import Coords
+from utility.coordinates import Coords
 from game_client.custom_exceptions import OutOfBoundsError
 from game_client.custom_typings import (CoordsDictTyping, GameStateDictTyping,
                                         MapDictTyping, VehicleDictTyping)

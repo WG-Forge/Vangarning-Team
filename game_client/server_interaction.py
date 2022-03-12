@@ -250,3 +250,8 @@ class GameSession:
 
         """
         return self.server.get(ActionCode.LOGOUT)
+
+
+if __name__ == "__main__":
+    g = GameSession(name="Boris")
+    print(g.game_state())

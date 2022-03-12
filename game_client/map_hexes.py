@@ -29,32 +29,31 @@ class StaticHex(Hex, metaclass=SingletonMeta):
     can_go_through: bool = True
     can_shoot_through: bool = True
     can_stay: bool = True
+    can_use: bool = False
 
 
 @dataclass()
-class UsableHex(Hex):
+class LimitedBonusHex(Hex):
     """
     Base class for hexes that can change their state.
     """
 
+    uses_left: int = 3
+    bonus: int = 0
     can_go_through: bool = True
     can_shoot_through: bool = True
     can_stay: bool = True
-    uses_left: int = 3
 
-    def can_use(self) -> bool:
+    def use(self) -> int:
         """
-        Tells if there are any uses left.
-
-        """
-        return self.uses_left > 0
-
-    def use(self) -> None:
-        """
-        Decrease uses_left counter by one.
+        Returns bonus if there is any uses left else 0.
 
         """
-        self.uses_left -= 1
+        if self.uses_left > 0:
+            self.uses_left -= 1
+            return self.bonus
+
+        return 0
 
 
 class EmptyHex(StaticHex):
@@ -92,7 +91,7 @@ class HardRepair(StaticHex):
     )
 
 
-class Catapult(UsableHex):
+class Catapult(LimitedBonusHex):
     can_go_through: bool = True
     can_shoot_through: bool = True
     can_stay: bool = True

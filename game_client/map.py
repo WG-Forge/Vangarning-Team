@@ -2,7 +2,7 @@
 Contains data class describing game map.
 """
 
-from game_client.coordinates import Coords
+from utility.coordinates import Coords
 from game_client.custom_exceptions import InvalidContentTypeError
 from game_client.custom_typings import ContentDictTyping, MapDictTyping
 from game_client.map_hexes import CONTENT_CLASSES, EmptyHex, Hex
