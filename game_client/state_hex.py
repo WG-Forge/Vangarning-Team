@@ -5,7 +5,7 @@ from typing import Union
 
 from utility.coordinates import Coords
 from game_client.map_hexes import StaticHex, LimitedBonusHex
-from game_client.vehicle import Vehicle
+from game_client.vehicles import Vehicle
 
 
 class GSHex:
@@ -52,5 +52,5 @@ class GSHex:
     def can_shoot_through(self) -> bool:
         return self.map_hex.can_shoot_through
 
-    def __eq__(self, other):
-        return self.coords == other.coords
+    # def __eq__(self, other):
+    #     return self.coords == other.coords

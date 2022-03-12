@@ -5,7 +5,7 @@ Contains class for describing game action.
 from utility.coordinates import Coords
 from game_client.custom_typings import CoordsDictTyping
 from game_client.server_interaction import ActionCode
-from game_client.vehicle import Vehicle
+from game_client.vehicles import Vehicle
 
 
 class Action:
@@ -15,9 +15,7 @@ class Action:
 
     def __init__(
         self,
-        action_code: ActionCode,
-        actor: Vehicle = None,
-        target: Coords = None,
+        action_code: ActionCode, actor: Vehicle, target: Coords,
         affected_vehicles=None,
     ):
         if affected_vehicles is None:
@@ -26,7 +24,7 @@ class Action:
         self.action_code: ActionCode = action_code
         self.actor: Vehicle = actor
         self.target: Coords = target
-        self.__affected_vehicles = affected_vehicles
+        self.affected_vehicles = affected_vehicles
 
     @property
     def server_format(self) -> tuple[ActionCode, int, CoordsDictTyping]:
@@ -34,10 +32,3 @@ class Action:
         Returns action in server format: ActionCode + actor id + target hex.
         """
         return self.action_code, self.actor.vehicle_id, self.target.server_format
-
-    @property
-    def affected_vehicles(self):
-        """
-        Returns list of affected vehicles objects.
-        """
-        return self.__affected_vehicles

@@ -13,7 +13,7 @@ from game_client.custom_typings import (CoordsDictTyping, GameStateDictTyping,
 from game_client.map import GameMap
 from game_client.player import Player
 from game_client.state_hex import GSHex
-from game_client.vehicle import VEHICLE_CLASSES, Vehicle
+from game_client.vehicles import VEHICLE_CLASSES, Vehicle
 
 
 class GameState:

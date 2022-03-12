@@ -5,7 +5,7 @@ from typing import Iterator
 
 from game_client.custom_typings import (AttackMatrixDictTyping,
                                         PlayerDictTyping, WinPointsDictTyping)
-from game_client.vehicle import TYPE_ORDER, Vehicle
+from game_client.vehicles import TYPE_ORDER, Vehicle
 
 
 class Player:

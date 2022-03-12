@@ -4,9 +4,9 @@ from game_client.game_state import GameState
 from game_client.custom_typings import MapDictTyping
 from game_client.state_hex import GSHex
 from utility.coordinates import Coords
-from game_client.action import Action
+from game_client.actions import Action
 from game_client.server_interaction import ActionCode
-from game_client.vehicle import Vehicle
+from game_client.vehicles import Vehicle, AtSpg
 from game_client.map_hexes import Catapult, LightRepair, HardRepair, Base
 
 DIRECTIONS = (
@@ -95,7 +95,7 @@ class BotGameState(GameState):
             return False
         if target.vehicle.hp <= 0:
             return False
-        if actor.shoots_flat and self.__shooting_path_has_obstacles(
+        if isinstance(actor, AtSpg) and self.__shooting_path_has_obstacles(
                 actor.position, target.coords
         ):
             return False

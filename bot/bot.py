@@ -1,6 +1,6 @@
 from bot.bot_game_state import BotGameState
 from game_client.custom_typings import GameStateDictTyping
-from game_client.action import Action
+from game_client.actions import Action
 
 
 class Bot:
