@@ -117,12 +117,17 @@ class GameState:
         :param vehicle: part of GAME_STATE response with an info about the actor
         """
         new_pos = Coords(vehicle["position"])
-        prev_pos = Coords(self.prev_server_state["vehicles"][vid]["position"])
-        vehicle_obj = self.vehicles[prev_pos]
-        del self.vehicles[prev_pos]
+        vehicle_obj = self.__get_vehicle_by_id(int(vid))
+        del self.vehicles[vehicle_obj.position]
         vehicle_obj.update(vehicle)
-
         self.vehicles[new_pos] = vehicle_obj
+
+    def __get_vehicle_by_id(self, vehicle_id: int) -> Vehicle:
+        for vehicle in self.vehicles.values():
+            if vehicle.vehicle_id == vehicle_id:
+                return vehicle
+
+        raise KeyError("There is no vehicle with such id")
 
     def __update_catapults(self, catapult_usages: list[CoordsDictTyping]) -> None:
         """

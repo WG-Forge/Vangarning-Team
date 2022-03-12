@@ -31,6 +31,7 @@ class ActionsGenerator(metaclass=SingletonMeta):
 
     def _get_possible_action(self, actor: Vehicle, target: GSHex) -> Optional[Action]:
         if self.game_state.can_shoot(actor, target):
+
             return Action(
                 ActionCode.SHOOT, actor, target.coords, [target.vehicle, ]
             )
@@ -60,9 +61,11 @@ class ActionsGenerator(metaclass=SingletonMeta):
         affected_vehicles: list[Vehicle] = []
         offset = actor.position.unit_vector(direction.coords)
         for distance in actor.distances_to_check:
-            potential_target = self.game_state.get_hex(
-                actor.position + (offset * distance)
-            )
+            potential_target_coords = actor.position + (offset * distance)
+            if self.game_state.game_map.are_valid_coords(potential_target_coords):
+                potential_target = self.game_state.get_hex(potential_target_coords)
+            else:
+                continue
             if not potential_target.can_shoot_through:
                 break
             if self.game_state.can_shoot(actor, potential_target):

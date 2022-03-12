@@ -32,7 +32,7 @@ class StaticHex(Hex, metaclass=SingletonMeta):
     can_use: bool = False
 
 
-@dataclass()
+@dataclass
 class LimitedBonusHex(Hex):
     """
     Base class for hexes that can change their state.
@@ -56,24 +56,28 @@ class LimitedBonusHex(Hex):
         return 0
 
 
+@dataclass(frozen=True)
 class EmptyHex(StaticHex):
     can_go_through: bool = True
     can_shoot_through: bool = True
     can_stay: bool = True
 
 
+@dataclass(frozen=True)
 class Obstacle(StaticHex):
     can_go_through: bool = False
     can_shoot_through: bool = False
     can_stay: bool = False
 
 
+@dataclass(frozen=True)
 class Base(StaticHex):
     can_go_through: bool = True
     can_shoot_through: bool = True
     can_stay: bool = True
 
 
+@dataclass(frozen=True)
 class LightRepair(StaticHex):
     can_go_through: bool = True
     can_shoot_through: bool = True
@@ -81,6 +85,7 @@ class LightRepair(StaticHex):
     served_classes: tuple = (MediumTank,)
 
 
+@dataclass(frozen=True)
 class HardRepair(StaticHex):
     can_go_through: bool = True
     can_shoot_through: bool = True
@@ -91,6 +96,7 @@ class HardRepair(StaticHex):
     )
 
 
+@dataclass
 class Catapult(LimitedBonusHex):
     can_go_through: bool = True
     can_shoot_through: bool = True

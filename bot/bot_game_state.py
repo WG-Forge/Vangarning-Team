@@ -47,7 +47,7 @@ class BotGameState(GameState):
             for i in range(6):  # going anticlockwise
                 for j in range(dist):
                     if self.game_map.are_valid_coords(hex_on_dist):
-                        yield hex_on_dist
+                        yield self.get_hex(hex_on_dist)
                     hex_on_dist = hex_on_dist + DIRECTIONS[i]
 
     def is_hex_reachable(self, actor: Vehicle, target: GSHex) -> bool:
@@ -69,7 +69,7 @@ class BotGameState(GameState):
                 for neighbour in self.get_hexes_on_dist(visited_hex, 1):
                     if neighbour == target:
                         return True
-                    if neighbour not in visited and neighbour.can_go_through:
+                    if neighbour.coords not in visited and neighbour.can_go_through:
                         visited.add(neighbour.coords)
                         fringes[k].append(neighbour.coords)
 

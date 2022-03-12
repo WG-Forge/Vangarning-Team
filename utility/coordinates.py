@@ -29,6 +29,9 @@ class Coords:
     def __hash__(self):
         return self.coordinates.__hash__()
 
+    def __iter__(self):
+        return self.coordinates.__iter__()
+
     def __abs__(self):
         # noinspection PyTypeChecker
         return Coords(tuple(abs(i) for i in self.coordinates))
