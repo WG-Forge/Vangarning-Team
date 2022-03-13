@@ -3,7 +3,6 @@ Contains class to store game state.
 
 """
 
-
 from typing import Optional
 
 from game_client.map import GameMap
@@ -112,11 +111,7 @@ class GameState:
         for idx, player in self.players.items():
             player.update(data["win_points"][str(idx)], data["attack_matrix"])
 
-<<<<<<< HEAD
-        vehicles_buff: dict[int, Vehicle] = {}  # For the cases when there is
-=======
         vehicles_buffer: dict[int, Vehicle] = {}  # For the cases when there is
->>>>>>> 6f573f7d8d6646ca4cae3c9edfa46f34afb81c2f
         # any vehicle at the new_pos
         for vid, vehicle in data["vehicles"].items():
             new_pos = Coords(vehicle["position"])
@@ -153,8 +148,7 @@ class GameState:
                 return vehicle
 
         raise KeyError(
-            f"There is no vehicle with id {vehicle_id}, "
-            f"{type(vehicle_id)}"
+            f"There is no vehicle with id {vehicle_id}, " f"{type(vehicle_id)}"
         )
 
     def __update_catapults(self, catapult_usages: list[CoordsDictTyping]) -> None:
