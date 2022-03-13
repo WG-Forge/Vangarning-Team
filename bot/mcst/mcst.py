@@ -1,3 +1,5 @@
+# pylint: skip-file
+# Still work in progress
 import math
 from struct import pack, unpack
 

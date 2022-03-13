@@ -1,3 +1,7 @@
+"""
+Contains class to describe game state in needed for bot way.
+
+"""
 from typing import Iterator
 
 from game_client.actions import Action
@@ -6,7 +10,6 @@ from game_client.server_interaction import ActionCode
 from game_client.state_hex import GSHex
 from game_client.vehicles import AtSpg, Vehicle
 from utility.coordinates import Coords
-from utility.custom_typings import MapDictTyping
 
 DIRECTIONS = (
     Coords((1, -1, 0)),
@@ -19,10 +22,18 @@ DIRECTIONS = (
 
 
 class BotGameState(GameState):
-    def __init__(self, game_map: MapDictTyping):
-        super().__init__(game_map)
+    """
+    Modification of GameState class with needed for bot methods.
+
+    Adds ways of getting multiple hexes, methods to check if vehicles can move
+    or shoot exact hexes, and a method to update game state from action.
+    """
 
     def update_from_action(self, action: Action) -> None:
+        """
+        Updates game state from the action.
+
+        """
         if action.action_code == ActionCode.MOVE:
             self.__apply_move_action(action)
 
@@ -41,7 +52,7 @@ class BotGameState(GameState):
             # Starting from bottom-left diagonal hex
             hex_on_dist = position + DIRECTIONS[4] * dist
             for i in range(6):  # going anticlockwise
-                for j in range(dist):
+                for _ in range(dist):
                     if self.game_map.are_valid_coords(hex_on_dist):
                         yield self.get_hex(hex_on_dist)
                     hex_on_dist = hex_on_dist + DIRECTIONS[i]
@@ -82,6 +93,12 @@ class BotGameState(GameState):
         return self.is_hex_reachable(actor, target)
 
     def can_shoot(self, actor: Vehicle, target: GSHex) -> bool:
+        """
+        Tells if the actor can (and have reason to) shoot given target.
+
+        :param actor: vehicle that is presented in the game
+        :param target: hex to shoot
+        """
         if not actor.target_in_shoot_range(target.coords):
             return False
         if target.vehicle is None:

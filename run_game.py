@@ -20,9 +20,9 @@ if __name__ == "__main__":
         game=game_name,
     )
 
-    bot_1 = StepScoreBot(game_session.map, estimator_weights=[1, 2, 3, 4])
-    bot_2 = StepScoreBot(game_session.map, estimator_weights=[2, 2, 2, 2])
-    bot_3 = StepScoreBot(game_session.map, estimator_weights=[4, 3, 2, 1])
+    bot_1 = StepScoreBot(game_session.map, estimator_weights=[1, 2, 0.4, 0.2, 1])
+    bot_2 = StepScoreBot(game_session.map, estimator_weights=[2, 2, 0.1, 0.04, 1])
+    bot_3 = StepScoreBot(game_session.map, estimator_weights=[4, 3, 0.7, 0.6, 1])
 
     tr1 = threading.Thread(target=game_loop, args=(bot_1, game_session))
     tr2 = threading.Thread(target=game_loop, args=(bot_2, game_session_1))
@@ -40,8 +40,3 @@ if __name__ == "__main__":
     tr3.join()
     b = perf_counter()
     print(f"\nGame duration: {b - a} seconds")
-
-# if __name__ == "__main__":
-#     game_session = GameSession(name="Bot_test_1")
-#     gbot = StepScoreBot(game_session.map)
-#     game_loop(gbot, game_session)

@@ -1,3 +1,8 @@
+"""
+Contains class for possible steps generation.
+
+"""
+
 from typing import Optional
 
 from bot.bot_game_state import BotGameState
@@ -7,15 +12,27 @@ from game_client.state_hex import GSHex
 from game_client.vehicles import AtSpg, Vehicle
 
 
+# pylint: disable=too-few-public-methods
+# Only __call__ is needed here
 class ActionsGenerator:
+    """
+    Provides methods for generating actions based on current game state.
+
+    """
+
     def __init__(self, game_state: BotGameState):
         self.game_state = game_state
 
     def __call__(self, actor: Vehicle) -> list[Action]:
+        """
+        Generates list with all possible actions for the given actor.
+
+        :param actor: Vehicle instance
+        :return: list of all possible actions.
+        """
         if isinstance(actor, AtSpg):
             return self.__get_possible_atspg_actions(actor)
-        else:
-            return self.__get_possible_non_atspg_actions(actor)
+        return self.__get_possible_non_atspg_actions(actor)
 
     def __get_possible_non_atspg_actions(self, actor: Vehicle) -> list[Action]:
         possible_actions: list[Action] = []

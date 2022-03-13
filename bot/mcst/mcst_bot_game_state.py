@@ -2,6 +2,8 @@
 Contains game state class for MCST bot
 """
 from bot.bot_game_state import BotGameState
+# pylint: skip-file
+# Still work in progress
 from game_client.actions import Action
 from game_client.map_hexes import Base, Catapult, HardRepair, LightRepair
 from game_client.server_interaction import ActionCode
