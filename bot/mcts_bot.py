@@ -1,81 +1,92 @@
 import time
+from os import cpu_count
+from multiprocessing import Pool
+from queue import Queue
 
-from bot import Bot
-from game_client import BotGameState
+from bot.bot import Bot
+from bot.mcst_bot_game_state import MCSTBotGameState
+from bot.mcst import MonteCarloSearchTree, MCSTNode, action_to_bytestring, bytestr_to_action
+from game_client.actions import Action
 
 
-# TODO: asynchronous programming
+
+
+# TODO: async
 class MCTSBot(Bot):
     def __init__(self, game_map, simulation_bot: Bot, time_limit):
         super().__init__(game_map)
         self.simulation_bot = simulation_bot
         self.time_limit = time_limit
-        self.allied_vehicles = []
-        self.enemy_vehicles = []  # TODO: remove?
-        self.game_state = None
-        self.tree = None
+        self.tree: MonteCarloSearchTree = MonteCarloSearchTree(None, simulation_bot)
+        self.queue = Queue(maxsize=cpu_count())
+        self.pool = Pool(initializer=self.__worker)
+        self.produce = False
 
-    def get_actions(self, game_state: BotGameState, previous_actions=None):
+    def __worker(self):
+        while True:
+            task = self.queue.get()
+            task()
+
+    def __producer(self):
+        while self.produce:
+            self.queue.put(item=self.__research_node)
+
+    def start_researching(self):
+        self.produce = True
+        self.queue.put(self.__producer())
+
+    def stop_researching(self):
+        self.produce = False
+
+    def get_actions(self, game_state: MCSTBotGameState, previous_actions=None):
         if previous_actions is not None:
             self.advance_tree(previous_actions)
-        if self.tree.root is None or self.game_state != game_state:
-            self.game_state = game_state
-            # TODO: create tree
-        self.allied_vehicles = list(
-            filter(
-                lambda vehicle: vehicle.player_id == game_state.current_player_idx,
-                game_state.vehicles,
-            )
-        )
-        self.enemy_vehicles = list(
-            filter(
-                lambda vehicle: vehicle.player_id != game_state.current_player_idx,
-                game_state.vehicles,
-            )
-        )
 
-        single_vehicle_time_limit = self.time_limit / len(self.allied_vehicles)
+        if self.tree.root is None:
+            self.tree.game_state = game_state
+            self.tree.root = MCSTNode(None, bytes())
+        if self.tree.game_state != game_state:
+            pass
+            # TODO: exception
 
-        actions = []
-        for vehicle in self.allied_vehicles:
+        single_vehicle_time_limit = self.time_limit / len(list(game_state.current_player.ordered_vehicle_iter))
+
+        actions: list[Action] = []
+        for vehicle in self.tree.game_state.current_player.ordered_vehicle_iter:
             action = self.__get_action(vehicle, single_vehicle_time_limit)
             self.__advance_tree(action)
-            actions.append(action)
-        # TODO: transform actions
+            actions.append(bytestr_to_action(action, game_state))
         return actions
 
-    # TODO: multithreading
     def __get_action(self, actor, time_limit):
         end_time = time.time_ns() + time_limit
         while time.time_ns() < end_time:
-            self.__research_node()
+            self.queue.put(item=self.__research_node)
+
         recommended_action_node = max(
-            self.tree.root.children, key=lambda node: node.am_visited
+            self.tree.root.children(), key=lambda node: node.am_visited
         )
-        return recommended_action_node.data
+        return recommended_action_node.action
 
     def __research_node(self):
-        node = self.tree.choice(self.tree.root)  # TODO: return game_state?
-        if node.child is not None:
-            self.tree.expansion(node)  # TODO: pass game_state?
-        winner_id = self.tree.simulation(
-            node, self.simulation_bot
-        )  # TODO: pass game_state?
-        self.tree.back_propagation(node, winner_id)
+        node, game_state = self.tree.selection()
+        if not game_state.finished:
+            node, game_state = self.tree.expansion(game_state, node)
+        winner_id = self.tree.playout(game_state)
+        self.tree.backpropagation(node, winner_id)
 
-    def advance_tree(self, actions: list):
+    def advance_tree(self, actions: list[Action], game_state: MCSTBotGameState):
         for action in actions:
-            # TODO: transform action
-            self.__advance_tree(action)
+            game_state.update_from_action(action)
+            bytestr_action = action_to_bytestring(action, game_state)
+            self.__advance_tree(bytestr_action)
             if self.tree.root is None:
                 break
 
-    def __advance_tree(self, action):
-        node = self.tree.root.child
+    def __advance_tree(self, action: bytearray):
         new_root = None
-        while node is not None:
-            if node.data == action:
+        for node in self.tree.root.children():
+            if node.action == action:
                 new_root = node
                 break
-            node = node.sibling
         self.tree.root = new_root

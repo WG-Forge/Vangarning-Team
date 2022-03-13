@@ -1,176 +1,121 @@
 import math
-import random
-from timeit import default_timer as timer
+from struct import pack, unpack
 
-from settings import TYPE_ORDER
-
-from bot import SimpleBot
-
-
-def get_possible_actions(game_state, vehicle_id):
-    # return possible actions of the actor
-    pass
+from bot.bot import Bot
+from game_client.actions import Action, ActionCode
+from bot.mcst_bot_game_state import MCSTBotGameState
+from utility.coordinates import Coords
+from bot.actions_generator import ActionsGenerator
 
 
-def apply_action(game_state, action) -> dict:
-    # apply action to game_state
-    pass
+def action_to_bytestring(action: Action, game_state: MCSTBotGameState):
+    return pack("cccccccccc", action.action_code.value, action.actor.vehicle_id, action.target, 0,
+                # TODO: get vehicle count
+                game_state.current_player.idx,
+                action.affected_vehicles)
 
 
-def switch_turn(game_state) -> dict:
-    # switch turn to the next player
-    pass
+def bytestr_to_action(bytestr: bytes, game_state: MCSTBotGameState):
+    unpacked = unpack("cccccccccc", bytestr)
+    affected_vehicles = []
+    for i in range(7, len(unpacked)):
+        affected_vehicles.append(find_vehicle(game_state.vehicles, unpacked[i]))
+    return Action(ActionCode(unpacked[0]),
+                  find_vehicle(game_state.vehicles, unpacked[1]),
+                  Coords((unpacked[2], unpacked[3], unpacked[4])),
+                  affected_vehicles)
+
+
+def get_current_player(bytestr: bytes):
+    return bytestr[6]
+
+
+def get_next_vehicle(bytestr: bytes):
+    return (bytestr[5] + 1) % 5
+
+
+def find_vehicle(vehicles, id):
+    return next(filter(lambda vehicle: vehicle.vehicle_id == id, vehicles.values()), None)
 
 
 class MCSTNode:
-    def __init__(self, game_state, parent, vehicles_id_already_moved: set):
-        self.game_state = game_state
-        self.parent = parent
-        self.children = None
-        self.visits = 0
-        # stores the vehicles of the current player that already made an action
-        self.vehicles_id_already_moved = vehicles_id_already_moved
-        if (
-            parent is not None
-            and parent.game_state["current_player_idx"]
-            != game_state["current_player_idx"]
-        ):
-            self.vehicles_id_already_moved = set()
-            self.game_state = switch_turn(self.game_state)
-        self.my_vehicle_id = self._get_my_vehicle_id()
-        self.wins = 0
+    def __init__(self, parent, action: bytes, child=None, sibling=None):
+        self.parent: MCSTNode = parent
+        self.child: MCSTNode = child
+        self.sibling: MCSTNode = sibling
+        self.am_visited = 0
+        self.am_wins = 0
+        self.action: bytes = action
 
-    def is_terminal(self):
-        # returns True if this state doesn't have children
-        return self.game_state["finished"]
-
-    def _get_my_vehicle_id(self):
-        # gets the id of actor for which you should choose action
-        vehicles = self.game_state["vehicles"]
-        player_id = self.game_state["current_player_idx"]
-        all_vehicles = sorted(
-            [i for i in vehicles.items() if i[1]["player_id"] == player_id],
-            key=lambda vehicle: TYPE_ORDER.index(vehicle[1]["vehicle_type"]),
-        )
-        for vehicle_id, vehicle in all_vehicles:
-            if vehicle_id not in self.vehicles_id_already_moved:
-                return vehicle_id
-        return None
-
-    def _init_children(self):
-        # lazy initialization of children
-        if self.children is not None:
-            return
-        for_child_already_moved = self.vehicles_id_already_moved.copy()
-        for_child_already_moved.add(self.my_vehicle_id)
-        possible_actions = get_possible_actions(self.game_state, self.my_vehicle_id)
-        for action in possible_actions:
-            child = MCSTNode(
-                apply_action(self.game_state, action), self, for_child_already_moved
-            )
-            self.children.append((action, child))
+    def children(self):
+        node = self.child
+        while node is not None:
+            yield node
+            node = node.sibling
 
     def have_all_children(self):
-        # checks that we have visited all children
-        self._init_children()
-        return all((child.visits > 0 for action, child in self.children))
+        return all((child.am_visited > 0 for child in self.children()))
 
-    def get_random_child(self):
+    def get_new_child(self):
         # returns random children
-        self._init_children()
-        return random.choice(self.children)[1]
+        return next(filter(lambda child: child.am_visited == 0, self.children()))
 
     def get_most_valuable_child(self):
-        # gets child with the most UCT score
-        self._init_children()
-        best_action, best_child = self.children[0]
-        for action, child in self.children:
-            if child.visits == 0:
-                continue
-            if best_child.visits == 0 or best_child.get_UCT() < child.get_UCT():
-                best_action, best_child = action, child
-        return best_action, best_child
+        return max(self.children(), key=lambda node: node.get_uct())
 
     def get_uct(self):
-        assert self.visits > 0
-        result = self.wins / self.visits
-        if self.parent is not None:
-            result += math.sqrt(2 * math.log(self.parent.visits) / self.visits)
+        result = self.am_wins / self.am_visited
+        result += math.sqrt(2 * math.log(self.parent.am_visited) / self.am_visited)
         return result
 
-    def backpropagation(self, winner_id):
-        # propagate winner_id to parents
-        if self.parent is None:
-            return
-        self.visits += 1
-        if self.parent.game_state["current_player_idx"] == winner_id:
-            self.wins += 1
 
-
-# creates new root every turn, because game_state not hashable
 class MonteCarloSearchTree:
-    def __init__(self, game_state, bot):
-        self.root = MCSTNode(game_state, None, set())
-        self.bot = bot
+    def __init__(self, game_state: MCSTBotGameState, bot: Bot):
+        self.root: MCSTNode = MCSTNode(None, bytes())
+        self.bot: Bot = bot
+        self.game_state: MCSTBotGameState = game_state
+        self.action_generator = ActionsGenerator(game_state)
 
-    def choice(self):
-        # go down the tree before met terminal node or node which has unvisited child
-        node = self.current_node
-        while not node.is_terminal() and node.have_all_children():
+    def selection(self) -> (MCSTNode, MCSTBotGameState):
+        node = self.root
+        game_state = self.game_state  # TODO: copy game_state
+        while not game_state.finished and node.have_all_children():
             node = node.get_most_valuable_child()
-        if not node.is_terminal():
-            return node.get_random_child()
-        return node
 
-    def simulation(self, node):
-        # get actions from the bot for the rest of actor of current player
-        # switch turn, and determine the winner
-        game_state = node.game_state
-        vehicles = game_state["vehicles"]
-        player_id = game_state["current_player_idx"]
-        all_vehicles = sorted(
-            [i for i in vehicles.items() if i[1]["player_id"] == player_id],
-            key=lambda vehicle: TYPE_ORDER.index(vehicle[1]["vehicle_type"]),
-        )
-        for vehicle_id, vehicle in all_vehicles:
-            if vehicle_id not in node.vehicles_id_already_moved:
-                action = self.bot.get_action_for_vehicle(game_state, vehicle_id)
-                game_state = apply_action(game_state, action)
-        game_state = switch_turn(game_state)
-        while not game_state["finished"]:
-            for action in self.bot.get_actions(game_state):
-                game_state = apply_action(game_state, action)
-        game_state = switch_turn(game_state)
-        return game_state["winner"]
+            action = bytestr_to_action(node.action, game_state)
+            game_state.update_from_action(action)  # TODO: update from action
+        return node, game_state
 
-    def get_move(self, timeout):
-        # do choice and simulation before timeout
-        time_elapsed = 0
-        while time_elapsed < timeout:
-            start = timer()
-            node = self.choice()
-            winner_id = self.simulation(node)
-            node.back_propagation(winner_id)
-            time_elapsed += timer() - start
-        action, child = self.current_node.get_most_valuable_child()
-        self.current_node = child
-        return action
+    def expansion(self, node: MCSTNode, game_state: MCSTBotGameState):
+        new_node = node.get_new_child()
 
+        action = bytestr_to_action(node.action, game_state)
+        game_state.update_from_action(action)  # TODO: update_from_action
 
-class AdvancedBot:
-    def __init__(self, game_map):
-        self.simple_bot = SimpleBot(game_map)
+        self.action_generator.game_state = game_state
+        vehicles = game_state.current_player.ordered_vehicle_iter
+        vehicle = next(vehicles)
+        for i in range(get_next_vehicle(node.action)):
+            vehicle = next(vehicles)
 
-    def get_actions(self, game_state: dict, timeout):
-        tree = MonteCarloSearchTree(game_state, self.simple_bot)
-        actions = []
-        vehicles = game_state["vehicles"]
-        player_id = game_state["current_player_idx"]
-        all_vehicles = sorted(
-            [i for i in vehicles.items() if i[1]["player_id"] == player_id],
-            key=lambda vehicle: TYPE_ORDER.index(vehicle[1]["vehicle_type"]),
-        )
-        for i in range(len(all_vehicles)):
-            actions.append(tree.get_action(), timeout / len(all_vehicles))
+        possible_steps = self.action_generator(vehicle)  # TODO: get possible steps
+        child = None
+        for action in possible_steps:
+            bytestr = action_to_bytestring(action)
+            child = MCSTNode(
+                new_node, bytestr, sibling=child
+            )
+        new_node.child = child
+        return new_node, game_state
 
-        return actions
+    def playout(self, game_state: MCSTBotGameState):
+        while not game_state.finished:
+            for action in self.bot.get_actions(game_state):  # TODO: change interface
+                game_state.update_from_action(action)  # TODO: update from action
+        return game_state.winner  # TODO: get winner
+
+    def backpropagation(self, node: MCSTNode, winner):
+        while node.parent is not None:
+            node.am_visited += 1
+            if get_current_player(node.action) == winner:  # TODO: determine which player made a move
+                node.am_wins += 1
