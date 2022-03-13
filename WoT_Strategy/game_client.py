@@ -1,6 +1,7 @@
 from queue import PriorityQueue
 from typing import Union
 
+from gui import GameStateProperty
 import hex
 from bot import Bot
 from server_interaction import ActionCode, GameSession
@@ -14,6 +15,7 @@ TYPES_TO_CLASSES = {
     "medium_tank": MediumTank,
     "spg": Spg,
 }
+
 
 # TODO: Replace a_star_search in can_move method to smth faster
 #  but less universal
@@ -387,6 +389,9 @@ class BotGameState:
         ]
 
 
+game_state_property = GameStateProperty()
+
+
 def game_loop(bot: Bot, game: GameSession):
     """
     Plays the given game with the given bot.
@@ -395,8 +400,11 @@ def game_loop(bot: Bot, game: GameSession):
     :param game:
     :return:
     """
-    while not game_tick(bot, game)["finished"]:
-        pass
+    game_is_finished = False
+    while not game_is_finished:
+        global game_state_property
+        game_state_property.game_state = game_tick(bot, game)
+        game_is_finished = game_state_property.game_state["finished"]
 
 
 def game_tick(bot: Bot, game: GameSession):

@@ -3,6 +3,7 @@ Handles graphic interface
 """
 
 import os
+from threading import Lock
 
 os.environ["KIVY_NO_ARGS"] = "1"
 from kivy.app import App
@@ -17,9 +18,9 @@ from kivy.properties import (
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scatter import Scatter
 from kivy.uix.widget import Widget
+from kivy.uix.effectwidget import EffectWidget
 
 from settings import CoordsTuple, CoordsDict
-from game_client import game_tick
 from hex import tuple_to_dict, dict_to_tuple
 
 COLORS = {
@@ -159,8 +160,8 @@ def create_hexes(map_data: dict):
     """
     for cube_x in range(-map_data["size"], map_data["size"] + 1):
         for cube_y in range(
-                max(-map_data["size"], -map_data["size"] - cube_x),
-                min(map_data["size"] + 1, map_data["size"] - cube_x + 1),
+            max(-map_data["size"], -map_data["size"] - cube_x),
+            min(map_data["size"] + 1, map_data["size"] - cube_x + 1),
         ):
             cube_coords_tuple = (cube_x, cube_y, -cube_x - cube_y)
             new_hex = Hex()
@@ -192,7 +193,7 @@ def create_special_hex(cube_coords: CoordsDict, hex_type: str):
     return new_hex
 
 
-class WoTStrategyRoot(Widget):
+class WoTStrategyRoot(EffectWidget):
     """
     Root widget for app
     """
@@ -296,22 +297,44 @@ class WoTStrategyRoot(Widget):
             self.consumables[hex_cube_coords_tuple].uses += 1
 
 
+class GameStateProperty:
+    def __init__(self):
+        self.callbacks = []
+        self.lock = Lock()
+        self._game_state = {}
+
+    def bind(self, callback):
+        self.callbacks.append(callback)
+
+    @property
+    def game_state(self):
+        return self._game_state
+
+    @game_state.setter
+    def game_state(self, value):
+        with self.lock:
+            self._game_state = value
+            for callback in self.callbacks:
+                callback(self._game_state)
+
+
 class WoTStrategyApp(App):
     """
     To run game with gui: WotStrategyApp(...).run()
     """
 
-    def __init__(self, map_data, bot, game_session):
+    kv_directory = "assets"
+
+    def __init__(self, map_data, game_state_property):
         """
 
         :param map_data: Map dict from server
-        :param bot: Bot that will be used to choose actions
-        :param game_session:
+        :param game_state_property: Property to update gui on set game state
         """
         super().__init__()
         self.map_data = map_data
-        self.bot = bot
-        self.game_session = game_session
+        self.game_state_property = game_state_property
+        self.game_state = {}
 
     def build(self):
         root = WoTStrategyRoot()
@@ -320,19 +343,9 @@ class WoTStrategyApp(App):
         root.scatter.y = Window.height / 2
 
         root.create_map(self.map_data)
-
-        Clock.schedule_once(self.tick, 0)
+        self.game_state_property.bind(
+            lambda game_state: Clock.schedule_once(
+                lambda dt: self.root.update(game_state), 0
+            )
+        )
         return root
-
-    def tick(self, _dt):
-        """
-        Performs single tick with gui
-
-        :param _dt: Time since last frame, not used
-        :return:
-        """
-        new_state = game_tick(self.bot, self.game_session)
-        if new_state is None:
-            return
-        self.root.update(new_state)
-        Clock.schedule_once(self.tick, 0)

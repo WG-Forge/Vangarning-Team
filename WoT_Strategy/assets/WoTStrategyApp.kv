@@ -1,7 +1,7 @@
-#:kivy 2.0.0
-#:set HEX_SIZE 25
-#:set MAX_HP_BARS 3
-#:set VEHICLE_SIZE_MULTIPLIER 1.5
+#: kivy 2.0.0
+#: import ew kivy.uix.effectwidget
+#: set HEX_SIZE 25
+#: set MAX_HP_BARS 3
 
 <SingleHPBar>:
     canvas:
@@ -15,9 +15,9 @@
 <HPBar>:
     max_hp: 0
     hp: 0
-    size: HEX_SIZE * VEHICLE_SIZE_MULTIPLIER * self.max_hp / MAX_HP_BARS, HEX_SIZE * 0.3
+    size: HEX_SIZE * 1.5 * self.max_hp / MAX_HP_BARS, HEX_SIZE * 1.5 * 0.3
     layout: layout_id
-    offset: (HEX_SIZE * VEHICLE_SIZE_MULTIPLIER - self.width) / 2
+    offset: (HEX_SIZE * 2 - self.width) / 2
     canvas:
         Color:
             rgba: 1, 1, 1, 0.5
@@ -42,7 +42,7 @@
 
 <Vehicle>:
     hp_bar: bar_id
-    size: HEX_SIZE * VEHICLE_SIZE_MULTIPLIER, HEX_SIZE * 0.866025 * VEHICLE_SIZE_MULTIPLIER
+    size: HEX_SIZE * 2, HEX_SIZE * 2 * 0.866025
     color: 1, 0, 0
     file: "assets/MT.png"
     canvas:
@@ -97,5 +97,6 @@
 
 <WoTStrategyRoot>:
     scatter: scatter_id
+    effects: ew.FXAAEffect(),
     Scatter:
         id: scatter_id
