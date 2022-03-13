@@ -3,6 +3,8 @@ from time import perf_counter
 
 from game_client.server_interaction import GameSession, ActionCode
 from bot.step_score_bot import StepScoreBot
+from gui.gui import WoTStrategyApp
+from gui.game_state_property import game_state_property
 
 
 def game_loop(bot, game):
@@ -10,6 +12,7 @@ def game_loop(bot, game):
     shots = 0
     while True:
         game_state = game.game_state()
+        game_state_property.game_state = game_state
         if game_state["finished"]:
             print("You won" if game_state["winner"] == game.player_id else "You lost")
             print(f"Shots to movements ratio: {shots/movements}")
@@ -58,6 +61,9 @@ if __name__ == "__main__":
     tr1.start()
     tr2.start()
     tr3.start()
+
+    WoTStrategyApp(game_session.map, game_state_property).run()
+
     tr1.join()
     tr2.join()
     tr3.join()
