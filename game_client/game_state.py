@@ -3,12 +3,15 @@ Contains class to store game state.
 
 """
 
-
 from typing import Optional
 
 from utility.coordinates import Coords
-from utility.custom_typings import (CoordsDictTyping, GameStateDictTyping,
-                                    MapDictTyping, VehicleDictTyping)
+from utility.custom_typings import (
+    CoordsDictTyping,
+    GameStateDictTyping,
+    MapDictTyping,
+    VehicleDictTyping,
+)
 from game_client.map import GameMap
 from game_client.player import Player
 from game_client.state_hex import GSHex
@@ -112,11 +115,7 @@ class GameState:
         for idx, player in self.players.items():
             player.update(data["win_points"][str(idx)], data["attack_matrix"])
 
-<<<<<<< HEAD
-        vehicles_buff: dict[int, Vehicle] = {}  # For the cases when there is
-=======
         vehicles_buffer: dict[int, Vehicle] = {}  # For the cases when there is
->>>>>>> 6f573f7d8d6646ca4cae3c9edfa46f34afb81c2f
         # any vehicle at the new_pos
         for vid, vehicle in data["vehicles"].items():
             new_pos = Coords(vehicle["position"])
@@ -153,8 +152,7 @@ class GameState:
                 return vehicle
 
         raise KeyError(
-            f"There is no vehicle with id {vehicle_id}, "
-            f"{type(vehicle_id)}"
+            f"There is no vehicle with id {vehicle_id}, " f"{type(vehicle_id)}"
         )
 
     def __update_catapults(self, catapult_usages: list[CoordsDictTyping]) -> None:

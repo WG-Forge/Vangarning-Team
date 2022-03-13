@@ -5,13 +5,20 @@ Handles graphic interface
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
-from kivy.properties import (ListProperty, NumericProperty, ObjectProperty,
-                             ReferenceListProperty)
+
+# pylint: disable=E0611
+from kivy.properties import (
+    ListProperty,
+    NumericProperty,
+    ObjectProperty,
+    ReferenceListProperty,
+)
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.effectwidget import EffectWidget
 from kivy.uix.scatter import Scatter
 from kivy.uix.widget import Widget
 
+from game_client.vehicles import VEHICLE_CLASSES
 from utility.coordinates import Coords
 from utility.custom_typings import CoordsDictTyping, CoordsTupleTyping
 
@@ -39,8 +46,13 @@ CONSUMABLES_MAX_USES = {"light_repair": -1, "hard_repair": -1, "catapult": 3}
 HEX_SIZE = NumericProperty(25)
 
 
-def dict_to_tuple(dict):
-    return dict["x"], dict["y"], dict["z"]
+def dict_to_tuple(coord_dict):
+    """
+    Transforms coordinates from dict representation to tuple representation.
+    :param coord_dict: Coordinates dict
+    :return: Coordinates tuple
+    """
+    return coord_dict["x"], coord_dict["y"], coord_dict["z"]
 
 
 def cube_to_cartesian(coords: CoordsTupleTyping) -> tuple[float, float]:
@@ -89,6 +101,8 @@ class HPBar(Widget):
         :return:
         """
         i = self.max_hp
+        # pylint: disable=C0104
+        # Meant not as name placeholder but literal bar
         for bar in self.layout.children:
             bar.opacity = 1 if i <= value else 0
             i -= 1
@@ -105,7 +119,14 @@ class Entity(Widget):
     coords = ReferenceListProperty(x_coord, y_coord)
     color = ListProperty([0, 0, 0])
 
-    def on_hex_size(self, instance, value):
+    def on_hex_size(self, _instance, value):
+        """
+        Callback which updates child widgets hex_size property
+
+        :param _instance: Event dispatcher
+        :param value: new hex_size value
+        :return:
+        """
         for child in self.children:
             child.hex_size = value
 
@@ -197,9 +218,20 @@ def create_special_hex(cube_coords: CoordsDictTyping, hex_type: str):
 
 
 class MyScatter(Scatter):
+    """
+    Custom scatter class width hex_size property attribute
+    """
+
     hex_size = NumericProperty(25)
 
-    def on_hex_size(self, instance, value):
+    def on_hex_size(self, _instance, value):
+        """
+        Callback which updates child widgets hex_size property
+
+        :param _instance: Event dispatcher
+        :param value: new hex_size value
+        :return:
+        """
         for child in self.children:
             child.hex_size = value
 
@@ -230,8 +262,7 @@ class WoTStrategyRoot(EffectWidget):
 
         vehicle = Vehicle()
         vehicle.hex_size = self.hex_size
-        # TODO: get max hp from local files, not server response
-        vehicle.hp_bar.max_hp = vehicle_data["health"]
+        vehicle.hp_bar.max_hp = VEHICLE_CLASSES[vehicle_data["vehicle_type"]]().max_hp
         vehicle.hp_bar.hp = vehicle_data["health"]
         vehicle.color = self.ids_to_colors[vehicle_data["player_id"]]
         vehicle.file = VEHICLE_TYPES_TO_SPRITES[vehicle_data["vehicle_type"]]
@@ -273,10 +304,18 @@ class WoTStrategyRoot(EffectWidget):
         """
         self.scatter.pos = (width / 2, height / 2)
         self.hex_size = min(
-            width / (self.map_size * 1.5 + 0.5), height / (self.map_size * 2 * 0.866025)
+            (width - 10) / (self.map_size * 1.5 + 0.5),
+            (height - 10) / (self.map_size * 2 * 0.866025),
         )
 
-    def on_hex_size(self, instance, value):
+    def on_hex_size(self, _instance, value):
+        """
+        Callback which updates child widgets hex_size property
+
+        :param _instance: Event dispatcher
+        :param value: new hex_size value
+        :return:
+        """
         for child in self.children:
             child.hex_size = value
 
