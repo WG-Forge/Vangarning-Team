@@ -2,7 +2,7 @@
 Classes to describe different vehicle types.
 """
 from utility.coordinates import Coords
-from game_client.custom_typings import VehicleDictTyping
+from utility.custom_typings import VehicleDictTyping
 
 
 class Vehicle:
@@ -45,7 +45,13 @@ class Vehicle:
         self.hp = data["health"]
         self.shoot_range_bonus = data["shoot_range_bonus"]
 
-    def update_position(self, new_position: Coords):
+    def update_position(self, new_position: Coords) -> None:
+        """
+        Updates position from coords object.
+
+        :param new_position:
+        """
+
         self.position = new_position
 
     def target_in_shoot_range(self, target: Coords) -> bool:
@@ -56,8 +62,11 @@ class Vehicle:
         :return:
         """
         dist: int = self.position.straight_dist_to(target)
-        return self.shoot_range[0] <= dist <= (self.shoot_range[1]
-                                               + self.shoot_range_bonus)
+        return (
+            self.shoot_range[0]
+            <= dist
+            <= (self.shoot_range[1] + self.shoot_range_bonus)
+        )
 
     @property
     def distances_to_check(self) -> list:
@@ -70,19 +79,22 @@ class Vehicle:
 
         :return: distances that the vehicle can potentially affect
         """
-        return list({
-            self.speed_points,
-            *range(
-                self.shoot_range[0],
-                self.shoot_range[1] + self.shoot_range_bonus + 1
-            )
-        })
+        return list(
+            {
+                self.speed_points,
+                *range(
+                    self.shoot_range[0],
+                    self.shoot_range[1] + self.shoot_range_bonus + 1,
+                ),
+            }
+        )
 
     def shoot(self) -> None:
-        self.shoot_range_bonus = 0
+        """
+        Nullifies shooting_range_bonus.
 
-    def move(self, target: Coords) -> None:
-        self.position = target
+        """
+        self.shoot_range_bonus = 0
 
     def receive_damage(self, damage: int) -> int:
         """

@@ -6,14 +6,19 @@ Contains class to store game state.
 
 from typing import Optional
 
-from utility.coordinates import Coords
-from game_client.custom_exceptions import OutOfBoundsError
-from game_client.custom_typings import (CoordsDictTyping, GameStateDictTyping,
-                                        MapDictTyping, VehicleDictTyping)
 from game_client.map import GameMap
 from game_client.player import Player
 from game_client.state_hex import GSHex
 from game_client.vehicles import VEHICLE_CLASSES, Vehicle
+from utility.coordinates import Coords
+from utility.custom_typings import (CoordsDictTyping, GameStateDictTyping,
+                                    MapDictTyping, VehicleDictTyping)
+
+
+class OutOfBoundsError(Exception):
+    """
+    Called when coordinates are out of map's bounds.
+    """
 
 
 class GameState:
@@ -36,8 +41,6 @@ class GameState:
         self.players: dict[int, Player] = {}
         self.vehicles: dict[Coords, Vehicle] = {}
         self.spawn_points: list[Coords] = []
-        # noinspection PyTypeChecker
-        self.prev_game_state: GameStateDictTyping = {}
 
     def update(self, data: GameStateDictTyping) -> None:
         """
@@ -54,8 +57,6 @@ class GameState:
 
         self.current_turn = data["current_turn"]
         self.current_player = self.players[data["current_player_idx"]]
-
-        self.prev_server_state = data
 
     def get_hex(self, coordinates: Coords) -> GSHex:
         """

@@ -2,10 +2,16 @@
 Contains data class describing game map.
 """
 
-from utility.coordinates import Coords
-from game_client.custom_exceptions import InvalidContentTypeError
-from game_client.custom_typings import ContentDictTyping, MapDictTyping
 from game_client.map_hexes import CONTENT_CLASSES, EmptyHex, Hex
+from utility.coordinates import Coords
+from utility.custom_typings import ContentDictTyping, MapDictTyping
+
+
+class InvalidContentTypeError(Exception):
+    """
+    Called if content type received from the server has no class
+    corresponding to it.
+    """
 
 
 class GameMap:

@@ -2,8 +2,9 @@ import math
 import random
 from timeit import default_timer as timer
 
-from bot import SimpleBot
 from settings import TYPE_ORDER
+
+from bot import SimpleBot
 
 
 def get_possible_actions(game_state, vehicle_id):

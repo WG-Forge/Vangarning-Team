@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Union
 
-from game_client.custom_typings import CoordsDictTyping, CoordsTupleTyping
+from utility.custom_typings import CoordsDictTyping, CoordsTupleTyping
 
 
 class Coords:
@@ -18,62 +18,62 @@ class Coords:
     def __init__(self, coordinates: Union[CoordsDictTyping, CoordsTupleTyping]):
         if isinstance(coordinates, dict):
             # noinspection PyTypeChecker
-            coordinates: CoordsTupleTyping = tuple(coordinates.values())
+            coordinates = tuple(coordinates.values())
 
-        self.coordinates = coordinates
-        self.max_dimension: int = max([abs(i) for i in self.coordinates])
+        self.x, self.y, self.z = coordinates
+        self.max_dimension: int = max([self.x, self.y, self.z])
 
     def __eq__(self, other):
-        return self.coordinates == other.coordinates
+        return self.x == other.x and self.y == other.y and self.z == other.z
 
     def __hash__(self):
-        return self.coordinates.__hash__()
+        return hash((self.x, self.y, self.z))
 
     def __iter__(self):
-        return self.coordinates.__iter__()
+        for i in (self.x, self.y, self.z):
+            yield i
 
     def __abs__(self):
         # noinspection PyTypeChecker
-        return Coords(tuple(abs(i) for i in self.coordinates))
+        return Coords((abs(self.x), abs(self.y), abs(self.z)))
 
     def __add__(self, other: Coords) -> Coords:
         if isinstance(other, Coords):
             # noinspection PyTypeChecker
-            return Coords(
-                tuple(map(lambda x1, x2: x1 + x2, self.coordinates, other.coordinates))
-            )
+            return Coords((self.x + other.x, self.y + other.y, self.z + other.z))
 
         raise TypeError("Can only add Coords instance")
 
     def __sub__(self, other: Coords) -> Coords:
         if isinstance(other, Coords):
             # noinspection PyTypeChecker
-            return Coords(
-                tuple(map(lambda x1, x2: x1 - x2, self.coordinates, other.coordinates))
-            )
+            return Coords((self.x - other.x, self.y - other.y, self.z - other.z))
 
         raise TypeError("Can only subtract Coords instance")
 
     def __mul__(self, other) -> Coords:
         if isinstance(other, int):
             # noinspection PyTypeChecker
-            return Coords(tuple(map(lambda x: other * x, self.coordinates)))
+            return Coords((self.x * other, self.y * other, self.z * other))
 
         if isinstance(other, float):
             if other.is_integer():
                 # noinspection PyTypeChecker
-                return Coords(tuple(map(lambda x: int(other) * x, self.coordinates)))
+                return Coords(
+                    (self.x * int(other), self.y * int(other), self.z * int(other))
+                )
             raise TypeError("Float must satisfy .is_integer() method")
 
         raise TypeError(
-            f"Cannot multiply coordinates by an instance of {other.__class__}"
+            "Cannot multiply coordinates by an instance "
+            f"of {other.__class__.__name__}"
         )
 
     def __str__(self):
-        return self.coordinates.__str__()
+        return f"Coords({self.x}, {self.y}, {self.z})"
 
     def __repr__(self):
-        return self.coordinates.__repr__()
+        return f"Coords(({self.x}, {self.y}, {self.z}))"
 
     def delta(self, other: Coords) -> Coords:
         """
@@ -84,21 +84,21 @@ class Coords:
         """
         return abs(self - other)
 
-    def straight_dist_to(self, coords: Coords) -> int:
+    def straight_dist_to(self, other: Coords) -> int:
         """
         Calculates distance from self to other Coords
 
-        :param coords: any other Coords object
+        :param other: any other Coords object
         :return: distance (in hexes) between two Coords' objects
         """
-        return int(sum(self.delta(coords).coordinates) / 2)
+        return int(sum(self.delta(other)) / 2)
 
     def unit_vector(self, other: Coords) -> Coords:
         """
-        Calculates the unit vector (normalized vector) to given coordinates.
+        Calculates the unit vector (normalized vector) directed to given coordinates.
 
         :param other: any other Coords object
-        :return: Coords object representing unit vector to given coordinates
+        :return: Coords object representing unit vector directed to given coordinates
         """
         # noinspection PyTypeChecker
         return Coords(
@@ -107,7 +107,7 @@ class Coords:
                     lambda x: 0
                     if x[0] - x[1] == 0
                     else int((x[0] - x[1]) / abs(x[0] - x[1])),
-                    zip(other.coordinates, self.coordinates),
+                    zip(other, self),
                 )
             )
         )
@@ -119,7 +119,7 @@ class Coords:
         :return: coordinates dictionary
         """
         return {
-            "x": self.coordinates[0],
-            "y": self.coordinates[1],
-            "z": self.coordinates[2],
+            "x": self.x,
+            "y": self.y,
+            "z": self.z,
         }

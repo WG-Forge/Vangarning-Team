@@ -1,13 +1,12 @@
 from typing import Optional
 
-from game_client.custom_typings import GameStateDictTyping, MapDictTyping
-from bot.bot import Bot
 from bot.actions_generator import ActionsGenerator
+from bot.bot import Bot
 from game_client.actions import Action
 from game_client.server_interaction import ActionCode
-from game_client.vehicles import AtSpg, Vehicle
-from game_client.state_hex import GSHex
+from game_client.vehicles import Vehicle
 from utility.coordinates import Coords
+from utility.custom_typings import GameStateDictTyping, MapDictTyping
 
 
 class StepScoreBot(Bot):
@@ -43,9 +42,7 @@ class StepScoreBot(Bot):
     def __get_possible_actions(self, actor: Vehicle) -> list[Action]:
         steps = self.actions_generator(actor)
 
-        steps.sort(
-            key=lambda step: self.get_step_score(actor, step), reverse=True
-        )
+        steps.sort(key=lambda step: self.get_step_score(actor, step), reverse=True)
 
         return steps
 

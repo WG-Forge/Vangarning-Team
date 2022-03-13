@@ -2,10 +2,10 @@
 Contains class for describing game action.
 
 """
-from utility.coordinates import Coords
-from game_client.custom_typings import CoordsDictTyping
 from game_client.server_interaction import ActionCode
 from game_client.vehicles import Vehicle
+from utility.coordinates import Coords
+from utility.custom_typings import CoordsDictTyping
 
 
 class Action:
@@ -15,7 +15,9 @@ class Action:
 
     def __init__(
         self,
-        action_code: ActionCode, actor: Vehicle, target: Coords,
+        action_code: ActionCode,
+        actor: Vehicle,
+        target: Coords,
         affected_vehicles=None,
     ):
         if affected_vehicles is None:

@@ -1,13 +1,12 @@
 from typing import Iterator
 
-from game_client.game_state import GameState
-from game_client.custom_typings import MapDictTyping
-from game_client.state_hex import GSHex
-from utility.coordinates import Coords
 from game_client.actions import Action
+from game_client.game_state import GameState
 from game_client.server_interaction import ActionCode
-from game_client.vehicles import Vehicle, AtSpg
-from game_client.map_hexes import Catapult, LightRepair, HardRepair, Base
+from game_client.state_hex import GSHex
+from game_client.vehicles import AtSpg, Vehicle
+from utility.coordinates import Coords
+from utility.custom_typings import MapDictTyping
 
 DIRECTIONS = (
     Coords((1, -1, 0)),
@@ -29,9 +28,6 @@ class BotGameState(GameState):
 
         if action.action_code == ActionCode.SHOOT:
             self.__apply_shoot_action(action)
-
-        if action.action_code == ActionCode.TURN:
-            self.__apply_turn_action()
 
     def get_hexes_on_dist(self, position: Coords, dist: int) -> Iterator[GSHex]:
         """
@@ -96,15 +92,13 @@ class BotGameState(GameState):
         if target.vehicle.hp <= 0:
             return False
         if isinstance(actor, AtSpg) and self.__shooting_path_has_obstacles(
-                actor.position, target.coords
+            actor.position, target.coords
         ):
             return False
 
         return True
 
-    def __shooting_path_has_obstacles(
-            self, position: Coords, target: Coords
-    ) -> bool:
+    def __shooting_path_has_obstacles(self, position: Coords, target: Coords) -> bool:
         """
         Tells if there is something on the shot line.
 
@@ -122,40 +116,13 @@ class BotGameState(GameState):
         acting_player = self.players[action.actor.player_id]
         for vehicle in action.affected_vehicles:
             acting_player.win_points["kill"] += vehicle.receive_damage(
-                action.actor.damage)
+                action.actor.damage
+            )
 
     def __apply_move_action(self, action: Action) -> None:
         self.__update_vehicle_pos(action.actor, action.target)
 
-    def __apply_turn_action(self) -> None:
-        for vehicle in self.vehicles.values():
-            gshex = self.get_hex(vehicle.position)
-            player = self.players[vehicle.player_id]
-            map_hex_type = type(gshex.map_hex)
-
-            # Send back to spawn
-            if vehicle.hp <= 0:
-                self.__update_vehicle_pos(vehicle, vehicle.spawn_position)
-                vehicle.hp = vehicle.max_hp
-
-            # Repair vehicle
-            elif map_hex_type in (LightRepair, HardRepair):
-                if vehicle.__class__ in gshex.map_hex.served_classes:
-                    vehicle.hp = vehicle.max_hp
-
-            # Apply shooting range bonus
-            elif map_hex_type is Catapult:
-                vehicle.shoot_range_bonus = gshex.map_hex.use()
-
-            # Add/remove capture points
-            if map_hex_type is Base:
-                vehicle.capture_points += 1
-                player.win_points["capture"] += 1
-            else:
-                vehicle.capture_points = 0
-                player.win_points["capture"] -= vehicle.capture_points
-
     def __update_vehicle_pos(self, vehicle: Vehicle, new_position: Coords) -> None:
-        del (self.vehicles[vehicle.position])
+        del self.vehicles[vehicle.position]
         self.vehicles[new_position] = vehicle
         vehicle.update_position(new_position)

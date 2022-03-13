@@ -9,8 +9,8 @@ import struct
 from enum import IntEnum
 from typing import Optional, Union
 
-from game_client.custom_typings import (CoordsDictTyping, GameStateDictTyping,
-                                        MapDictTyping, PlayerDictTyping)
+from utility.custom_typings import (CoordsDictTyping, GameStateDictTyping,
+                                    MapDictTyping, PlayerDictTyping)
 
 HOST = "wgforge-srv.wargaming.net"
 PORT = 443
