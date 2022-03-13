@@ -137,3 +137,25 @@ class StepScoreBot(Bot):
             )
 
         return result
+
+    #metrics
+    def get_player_points(self, player_id: int, game_state: dict):
+        return game_state["win_points"][str(player_id)]
+
+    def get_vehicle_capture_points(self, vehicle: Vehicle):
+        return vehicle.capture_points
+
+    def get_points_from_action(self, action: Action):
+        if action.action_code == ActionCode.MOVE:
+            if self.game_state.get_hex_value(action.target) == HexCode.BASE:
+                return 1
+            return 0
+        result = 0
+        # add points for base capture
+        if self.game_state.get_hex_value(action.actor.position):
+            result += 1
+        if action.action_code == ActionCode.SHOOT:
+            # add points for elimination
+            if action.affected_vehicles[0].hp <= action.actor.damage:
+                result += action.affected_vehicles[0].max_hp
+        return result
