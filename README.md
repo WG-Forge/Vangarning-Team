@@ -10,7 +10,6 @@
 Python version: 3.9
 
  - Install dependencies: `pip install  -r  requirements.txt` 
- - Change directory: `cd WoT_Strategy`
 
 Use one of the following:
  - To create game without name for one player: `python
@@ -19,18 +18,46 @@ Use one of the following:
    terminal_interface.py {name} {game}`
  - To create game: `python terminal_interface.py {username} {game}
    {num_turns} {num_players}`
- - To play game with 3 simple bots: `python test_game.py`
+ - To start game with 3 simple bots and gui: `python run_game.py`
  
-If you want to see GUI add `--gui` after file name (not supported by `test_game.py`)
-[![image.png](https://i.postimg.cc/Hxk50L3c/image.png)](https://postimg.cc/7CjfwwFw)
+If you want to see GUI add `--gui` (terminal_interface.py only, run_game.py runs with gui by default)
+[![gui-screenshot-png.png](https://i.postimg.cc/j5jrGfLk/gui-screenshot-png.png)](https://postimg.cc/jWB9fL6z)
 ### Project structure
-- `server_interaction.py` - classes for interaction with server.
-- `game_client.py` - classes and fucntions needed to play game.
-- `vehicles.py` - classes to desctibe vehicles.
-- `bot.py` - base `Bot` class ans simple bot. OUTDATED.
-- `hex.py` - functions to deal with hexes coordinates transformations.
-- `mcst.py` and `mcst_bot.py` - Monte-Carlo Search Tree and bot that uses it. WIP.
-- `settings.py` - some constants which can be used in different places of the project.
-- `step_score_bot.py` - bot that uses formula (pretty simple for now) to find the best possible steps. Will be used in MCST Bot.
-- `terminal_interface.py` and `test_game.py` - *you can launch game from them!*
-- `assets`, `gui.py`, `WoTStrategyApp.kv` - GUI made using [kivy](https://kivy.org/#home).
+- #### `bot` module
+    - `mcst` module - Bot based on Monte-Carlo Search Tre. WIP.
+        - `mcst.py` - Monte-Carlo Search Tree
+        - `mcst_bot.py` - Monte-Carlo Tree Search bot
+        - `mcts_bot_game_state` Game state class for Monte-Carlo Tree Search Bot
+    
+    - `step_score_bot.py` - Bot that uses formula and predetermined weights to find the best possible steps.
+    - `action_estimator.py` - Estimates quality of the given action using predetermined weights.
+    - `action_generator.py` - Generates every possible action for given Vehicle and Game state.
+    - `bot.py` - Base `Bot` class.
+    - `bot_game_state.py` - Game state class describing game state in needed for bot way.
+    
+- #### `game_client` module - Low-level classes describing game logic.
+    - `actions.py` - `Action` class representing action for single vehicle.
+    - `game_loop.py` - `game_loop` function implementing main game loop.
+    - `game_state.py` - Base `GameState` class describing game state.
+    - `map.py` - `GameMap` class describing game map.
+    - `map_hexes.py` - Classes to describe different hex types.
+    - `player.py` - Class describing player.
+    - `server_interaction.py` - Classes for interaction with server.
+    - `state_hex.py` - Class to describe hex of a game state.
+    - `vehicles.py` - Classes to describe vehicles.
+    
+- #### `gui` module - Graphic user interface made using [kivy](https://kivy.org/#home).
+    - `assets` - Directory contains 2D and .kv assets.
+    - `game_state_property.py` - Class with game state property. Used to update gui when game state is changed.
+    - `gui.py` - Classes for graphic user interface.
+    
+- #### `tests` module - Unit tests. WIP.
+    - `test_coords.py` - Tests for `Coords` class defined in `utility.coordinates.py`.
+
+- #### `utility` module - Files with utility classes.
+    - `coordinates.py` - Contains class for map coordinates.
+    - `custom_typing.py` - Project-specific typings.
+    - `singleton.py` - Contains singleton meta class.
+
+- `estimator_coefficients_optimisation.py` - Functions to optimize `action_estimator.py` coefficients.
+- `terminal_interface.py` and `run_game.py` - *you can launch game from them!*
