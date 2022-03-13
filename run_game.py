@@ -30,7 +30,7 @@ def game_loop(bot: StepScoreBot, game):
 
 
 if __name__ == "__main__":
-    game_name = "VT_test"
+    game_name = "VT_test21"
 
     game_session = GameSession(name="Bot_test_1", game=game_name, num_players=3)
     game_session_1 = GameSession(

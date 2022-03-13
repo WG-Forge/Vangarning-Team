@@ -18,7 +18,9 @@ class ActionEstimator:
     def __call__(self, action: Action) -> float:
         result = 0.0
         position = (
-            action.target if action.action_code == ActionCode else action.actor.position
+            action.target
+            if action.action_code == ActionCode.MOVE
+            else action.actor.position
         )
 
         result += self.weights[0] * self.enemy_atk_to_hp_ratio(action.actor, position)

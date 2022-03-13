@@ -112,8 +112,21 @@ class GameState:
         for idx, player in self.players.items():
             player.update(data["win_points"][str(idx)], data["attack_matrix"])
 
+        vehicles_buff = {}  # For the cases when there is
+        # any vehicle at the new_pos
         for vid, vehicle in data["vehicles"].items():
-            self.__update_vehicle(vid, vehicle)
+            new_pos = Coords(vehicle["position"])
+            if int(vid) in vehicles_buff:
+                vehicle_obj = vehicles_buff[int(vid)]
+            else:
+                vehicle_obj = self.__get_vehicle_by_id(int(vid))
+                self.vehicles.pop(vehicle_obj.position)
+
+            vehicle_obj.update(vehicle)
+            if new_pos in self.vehicles:
+                vehicle_to_buff = self.vehicles[new_pos]
+                vehicles_buff[vehicle_to_buff.vehicle_id] = vehicle_to_buff
+            self.vehicles[new_pos] = vehicle_obj
 
     def __update_vehicle(self, vid: str, vehicle: VehicleDictTyping) -> None:
         """

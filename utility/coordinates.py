@@ -17,11 +17,10 @@ class Coords:
 
     def __init__(self, coordinates: Union[CoordsDictTyping, CoordsTupleTyping]):
         if isinstance(coordinates, dict):
-            # noinspection PyTypeChecker
             coordinates = tuple(coordinates.values())
 
         self.x, self.y, self.z = coordinates
-        self.max_dimension: int = max([self.x, self.y, self.z])
+        self.max_dimension: int = max([abs(self.x), abs(self.y), abs(self.z)])
 
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y and self.z == other.z
@@ -34,31 +33,26 @@ class Coords:
             yield i
 
     def __abs__(self):
-        # noinspection PyTypeChecker
         return Coords((abs(self.x), abs(self.y), abs(self.z)))
 
     def __add__(self, other: Coords) -> Coords:
         if isinstance(other, Coords):
-            # noinspection PyTypeChecker
             return Coords((self.x + other.x, self.y + other.y, self.z + other.z))
 
         raise TypeError("Can only add Coords instance")
 
     def __sub__(self, other: Coords) -> Coords:
         if isinstance(other, Coords):
-            # noinspection PyTypeChecker
             return Coords((self.x - other.x, self.y - other.y, self.z - other.z))
 
         raise TypeError("Can only subtract Coords instance")
 
     def __mul__(self, other) -> Coords:
         if isinstance(other, int):
-            # noinspection PyTypeChecker
             return Coords((self.x * other, self.y * other, self.z * other))
 
         if isinstance(other, float):
             if other.is_integer():
-                # noinspection PyTypeChecker
                 return Coords(
                     (self.x * int(other), self.y * int(other), self.z * int(other))
                 )

@@ -52,6 +52,6 @@ class StepScoreBot(Bot):
     def __get_possible_actions(self, actor: Vehicle) -> list[Action]:
         actions = self.actions_generator(actor)
 
-        actions.sort(key=lambda step: self.action_estimator(step), reverse=True)
+        actions.sort(key=lambda step: self.action_estimator(step), reverse=False)
 
         return actions
