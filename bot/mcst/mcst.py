@@ -1,18 +1,24 @@
 import math
 from struct import pack, unpack
 
-from bot.bot import Bot
-from game_client.actions import Action, ActionCode
-from bot.mcst_bot_game_state import MCSTBotGameState
-from utility.coordinates import Coords
 from bot.actions_generator import ActionsGenerator
+from bot.bot import Bot
+from bot.mcst.mcst_bot_game_state import MCSTBotGameState
+from game_client.actions import Action, ActionCode
+from utility.coordinates import Coords
 
 
 def action_to_bytestring(action: Action, game_state: MCSTBotGameState):
-    return pack("cccccccccc", action.action_code.value, action.actor.vehicle_id, action.target, 0,
-                # TODO: get vehicle count
-                game_state.current_player.idx,
-                action.affected_vehicles)
+    return pack(
+        "cccccccccc",
+        action.action_code.value,
+        action.actor.vehicle_id,
+        action.target,
+        0,
+        # TODO: get vehicle count
+        game_state.current_player.idx,
+        action.affected_vehicles,
+    )
 
 
 def bytestr_to_action(bytestr: bytes, game_state: MCSTBotGameState):
@@ -20,10 +26,12 @@ def bytestr_to_action(bytestr: bytes, game_state: MCSTBotGameState):
     affected_vehicles = []
     for i in range(7, len(unpacked)):
         affected_vehicles.append(find_vehicle(game_state.vehicles, unpacked[i]))
-    return Action(ActionCode(unpacked[0]),
-                  find_vehicle(game_state.vehicles, unpacked[1]),
-                  Coords((unpacked[2], unpacked[3], unpacked[4])),
-                  affected_vehicles)
+    return Action(
+        ActionCode(unpacked[0]),
+        find_vehicle(game_state.vehicles, unpacked[1]),
+        Coords((unpacked[2], unpacked[3], unpacked[4])),
+        affected_vehicles,
+    )
 
 
 def get_current_player(bytestr: bytes):
@@ -35,7 +43,9 @@ def get_next_vehicle(bytestr: bytes):
 
 
 def find_vehicle(vehicles, id):
-    return next(filter(lambda vehicle: vehicle.vehicle_id == id, vehicles.values()), None)
+    return next(
+        filter(lambda vehicle: vehicle.vehicle_id == id, vehicles.values()), None
+    )
 
 
 class MCSTNode:
@@ -102,9 +112,7 @@ class MonteCarloSearchTree:
         child = None
         for action in possible_steps:
             bytestr = action_to_bytestring(action)
-            child = MCSTNode(
-                new_node, bytestr, sibling=child
-            )
+            child = MCSTNode(new_node, bytestr, sibling=child)
         new_node.child = child
         return new_node, game_state
 
@@ -117,5 +125,7 @@ class MonteCarloSearchTree:
     def backpropagation(self, node: MCSTNode, winner):
         while node.parent is not None:
             node.am_visited += 1
-            if get_current_player(node.action) == winner:  # TODO: determine which player made a move
+            if (
+                get_current_player(node.action) == winner
+            ):  # TODO: determine which player made a move
                 node.am_wins += 1

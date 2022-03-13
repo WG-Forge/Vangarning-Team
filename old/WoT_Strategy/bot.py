@@ -1,5 +1,6 @@
-from game_client import Action, BotGameState
 from settings import TYPE_ORDER
+
+from game_client import Action, BotGameState
 
 
 class Bot:
@@ -8,7 +9,6 @@ class Bot:
 
     def get_actions(self, game_state: dict):
         raise NotImplementedError
-
 
 
 # class SimpleBot(Bot):

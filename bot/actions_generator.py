@@ -5,10 +5,9 @@ from game_client.actions import Action
 from game_client.server_interaction import ActionCode
 from game_client.state_hex import GSHex
 from game_client.vehicles import AtSpg, Vehicle
-from utility.singleton import SingletonMeta
 
 
-class ActionsGenerator(metaclass=SingletonMeta):
+class ActionsGenerator:
     def __init__(self, game_state: BotGameState):
         self.game_state = game_state
 

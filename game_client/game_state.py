@@ -35,6 +35,7 @@ class GameState:
         """
         self.game_map: GameMap = GameMap(game_map)
         self.finished: bool = False
+        self.winner: Optional[Player] = None
         self.num_turns: int = -1
         self.current_turn: int = -1
         self.current_player: Optional[Player] = None
@@ -57,6 +58,10 @@ class GameState:
 
         self.current_turn = data["current_turn"]
         self.current_player = self.players[data["current_player_idx"]]
+        self.finished = data["finished"]
+        self.winner = (
+            data["winner"] if data["winner"] is None else self.players[data["winner"]]
+        )
 
     def get_hex(self, coordinates: Coords) -> GSHex:
         """
@@ -107,8 +112,21 @@ class GameState:
         for idx, player in self.players.items():
             player.update(data["win_points"][str(idx)], data["attack_matrix"])
 
+        vehicles_buff = {}  # For the cases when there is
+        # any vehicle at the new_pos
         for vid, vehicle in data["vehicles"].items():
-            self.__update_vehicle(vid, vehicle)
+            new_pos = Coords(vehicle["position"])
+            if int(vid) in vehicles_buff:
+                vehicle_obj = vehicles_buff[int(vid)]
+            else:
+                vehicle_obj = self.__get_vehicle_by_id(int(vid))
+                self.vehicles.pop(vehicle_obj.position)
+
+            vehicle_obj.update(vehicle)
+            if new_pos in self.vehicles:
+                vehicle_to_buff = self.vehicles[new_pos]
+                vehicles_buff[vehicle_to_buff.vehicle_id] = vehicle_to_buff
+            self.vehicles[new_pos] = vehicle_obj
 
     def __update_vehicle(self, vid: str, vehicle: VehicleDictTyping) -> None:
         """
@@ -119,7 +137,7 @@ class GameState:
         """
         new_pos = Coords(vehicle["position"])
         vehicle_obj = self.__get_vehicle_by_id(int(vid))
-        del self.vehicles[vehicle_obj.position]
+        self.vehicles.pop(vehicle_obj.position)
         vehicle_obj.update(vehicle)
         self.vehicles[new_pos] = vehicle_obj
 
@@ -128,7 +146,7 @@ class GameState:
             if vehicle.vehicle_id == vehicle_id:
                 return vehicle
 
-        raise KeyError("There is no vehicle with such id")
+        raise KeyError(f"There is no vehicle with id {vehicle_id}, {type(vehicle_id)}")
 
     def __update_catapults(self, catapult_usages: list[CoordsDictTyping]) -> None:
         """

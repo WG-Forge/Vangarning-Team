@@ -1,8 +1,9 @@
 import threading
 from time import perf_counter
 
-from game_client import GameSession, game_loop
 from step_score_bot import StepScoreBot
+
+from game_client import GameSession, game_loop
 
 if __name__ == "__main__":
     game_name = "VT_test3"

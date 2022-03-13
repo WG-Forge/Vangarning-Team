@@ -123,6 +123,6 @@ class BotGameState(GameState):
         self.__update_vehicle_pos(action.actor, action.target)
 
     def __update_vehicle_pos(self, vehicle: Vehicle, new_position: Coords) -> None:
-        del self.vehicles[vehicle.position]
         self.vehicles[new_position] = vehicle
+        self.vehicles.pop(vehicle.position)
         vehicle.update_position(new_position)

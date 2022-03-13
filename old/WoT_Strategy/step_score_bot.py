@@ -1,11 +1,12 @@
 from typing import Optional
 
 import hexes
+from server_interaction import ActionCode
+from settings import NEIGHBOURS_OFFSETS, CoordsTuple, HexCode
+from vehicle import AtSpg, Vehicle
+
 from bot import Bot
 from game_client import Action
-from server_interaction import ActionCode
-from settings import NEIGHBOURS_OFFSETS, HexCode, CoordsTuple
-from vehicle import AtSpg, Vehicle
 
 
 class StepScoreBot(Bot):
@@ -132,7 +133,7 @@ class StepScoreBot(Bot):
 
         return result
 
-    #metrics
+    # metrics
     def get_player_points(self, player_id: int, game_state: dict):
         return game_state["win_points"][str(player_id)]
 
