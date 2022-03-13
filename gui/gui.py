@@ -43,6 +43,7 @@ SPECIAL_HEXES_TO_SPRITES = {
     "catapult": "gui/assets/catapult.png",
 }
 CONSUMABLES_MAX_USES = {"light_repair": -1, "hard_repair": -1, "catapult": 3}
+HEX_SIZE = NumericProperty(25)
 
 
 def dict_to_tuple(dict):
@@ -69,6 +70,7 @@ class HPBar(Widget):
     Hp bar widget
     """
 
+    hex_size = NumericProperty(25)
     max_hp = NumericProperty(0)
     hp = NumericProperty(0)
     offset = NumericProperty(0)
@@ -104,10 +106,15 @@ class Entity(Widget):
     Widget for independently positioned entity
     """
 
+    hex_size = NumericProperty(25)
     x_coord = NumericProperty(0)
     y_coord = NumericProperty(0)
     coords = ReferenceListProperty(x_coord, y_coord)
     color = ListProperty([0, 0, 0])
+
+    def on_hex_size(self, instance, value):
+        for child in self.children:
+            child.hex_size = value
 
 
 class Vehicle(Entity):
@@ -163,8 +170,8 @@ def create_hexes(map_data: dict):
     """
     for cube_x in range(-map_data["size"], map_data["size"] + 1):
         for cube_y in range(
-                max(-map_data["size"], -map_data["size"] - cube_x),
-                min(map_data["size"] + 1, map_data["size"] - cube_x + 1),
+            max(-map_data["size"], -map_data["size"] - cube_x),
+            min(map_data["size"] + 1, map_data["size"] - cube_x + 1),
         ):
             cube_coords_tuple = (cube_x, cube_y, -cube_x - cube_y)
             new_hex = Hex()
@@ -196,6 +203,14 @@ def create_special_hex(cube_coords: CoordsDictTyping, hex_type: str):
     return new_hex
 
 
+class MyScatter(Scatter):
+    hex_size = NumericProperty(25)
+
+    def on_hex_size(self, instance, value):
+        for child in self.children:
+            child.hex_size = value
+
+
 class WoTStrategyRoot(EffectWidget):
     """
     Root widget for app
@@ -205,7 +220,9 @@ class WoTStrategyRoot(EffectWidget):
     consumables: dict[tuple[int, int, int], SpecialHex] = {}
     not_used_colors = [COLORS["red"], COLORS["green"], COLORS["blue"]]
     ids_to_colors: dict[int, tuple[int, int, int]] = {}
-    scatter = Scatter()
+    scatter = MyScatter()
+    map_size = 23
+    hex_size = NumericProperty(25)
 
     def add_vehicle(self, vehicle_id, vehicle_data):
         """
@@ -219,6 +236,7 @@ class WoTStrategyRoot(EffectWidget):
             self.not_used_colors.remove(self.not_used_colors[0])
 
         vehicle = Vehicle()
+        vehicle.hex_size = self.hex_size
         # TODO: get max hp from local files, not server response
         vehicle.hp_bar.max_hp = vehicle_data["health"]
         vehicle.hp_bar.hp = vehicle_data["health"]
@@ -235,6 +253,7 @@ class WoTStrategyRoot(EffectWidget):
         :param map_data: Map dict
         :return:
         """
+        self.map_size = map_data["size"] * 2 + 1
         for new_hex in create_hexes(map_data):
             self.scatter.add_widget(new_hex)
 
@@ -260,6 +279,13 @@ class WoTStrategyRoot(EffectWidget):
         :return:
         """
         self.scatter.pos = (width / 2, height / 2)
+        self.hex_size = min(
+            width / (self.map_size * 1.5 + 0.5), height / (self.map_size * 2 * 0.866025)
+        )
+
+    def on_hex_size(self, instance, value):
+        for child in self.children:
+            child.hex_size = value
 
     def update(self, game_state: dict):
         """
@@ -320,11 +346,11 @@ class WoTStrategyApp(App):
 
     def build(self):
         root = WoTStrategyRoot()
-        Window.bind(on_resize=root.size_setter)
-        root.scatter.x = Window.width / 2
-        root.scatter.y = Window.height / 2
-
         root.create_map(self.map_data)
+
+        Window.bind(on_resize=root.size_setter)
+        Window.dispatch("on_resize", Window.width, Window.height)
+
         self.game_state_property.bind(
             lambda game_state: Clock.schedule_once(
                 lambda dt: self.root.update(game_state), 0
