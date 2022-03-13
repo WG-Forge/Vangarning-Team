@@ -8,8 +8,8 @@ Contains classes to describe different hex types.
 # Classes are reasonably described by their names
 from dataclasses import dataclass
 
-from game_client.vehicles import AtSpg, HeavyTank, MediumTank
 from utility.singleton import SingletonMeta
+from game_client.vehicles import AtSpg, HeavyTank, MediumTank
 
 
 class Hex:

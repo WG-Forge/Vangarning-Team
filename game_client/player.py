@@ -3,9 +3,9 @@ Contains Player class.
 """
 from typing import Iterator
 
-from game_client.vehicles import TYPE_ORDER, Vehicle
 from utility.custom_typings import (AttackMatrixDictTyping, PlayerDictTyping,
                                     WinPointsDictTyping)
+from game_client.vehicles import TYPE_ORDER, Vehicle
 
 
 class Player:
@@ -37,7 +37,8 @@ class Player:
         self.vehicles.append(vehicle)
 
     def update(
-        self, win_points: WinPointsDictTyping, attack_matrix: AttackMatrixDictTyping
+        self, win_points: WinPointsDictTyping,
+            attack_matrix: AttackMatrixDictTyping
     ) -> None:
         """
         Updates info about player.

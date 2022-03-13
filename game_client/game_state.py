@@ -6,13 +6,13 @@ Contains class to store game state.
 
 from typing import Optional
 
+from utility.coordinates import Coords
+from utility.custom_typings import (CoordsDictTyping, GameStateDictTyping,
+                                    MapDictTyping, VehicleDictTyping)
 from game_client.map import GameMap
 from game_client.player import Player
 from game_client.state_hex import GSHex
 from game_client.vehicles import VEHICLE_CLASSES, Vehicle
-from utility.coordinates import Coords
-from utility.custom_typings import (CoordsDictTyping, GameStateDictTyping,
-                                    MapDictTyping, VehicleDictTyping)
 
 
 class OutOfBoundsError(Exception):
@@ -112,7 +112,7 @@ class GameState:
         for idx, player in self.players.items():
             player.update(data["win_points"][str(idx)], data["attack_matrix"])
 
-        vehicles_buff = {}  # For the cases when there is
+        vehicles_buff: dict[int, Vehicle] = {}  # For the cases when there is
         # any vehicle at the new_pos
         for vid, vehicle in data["vehicles"].items():
             new_pos = Coords(vehicle["position"])
@@ -130,10 +130,12 @@ class GameState:
 
     def __update_vehicle(self, vid: str, vehicle: VehicleDictTyping) -> None:
         """
-        Changes actor position in self.vehicles and calls actor's update method.
+        Changes actor position in self.vehicles and
+        calls actor's update method.
 
         :param vid: actor id
-        :param vehicle: part of GAME_STATE response with an info about the actor
+        :param vehicle: part of GAME_STATE response with
+        an info about the actor
         """
         new_pos = Coords(vehicle["position"])
         vehicle_obj = self.__get_vehicle_by_id(int(vid))
@@ -146,7 +148,10 @@ class GameState:
             if vehicle.vehicle_id == vehicle_id:
                 return vehicle
 
-        raise KeyError(f"There is no vehicle with id {vehicle_id}, {type(vehicle_id)}")
+        raise KeyError(
+            f"There is no vehicle with id {vehicle_id}, "
+            f"{type(vehicle_id)}"
+        )
 
     def __update_catapults(self, catapult_usages: list[CoordsDictTyping]) -> None:
         """

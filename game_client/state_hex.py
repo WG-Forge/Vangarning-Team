@@ -3,9 +3,9 @@ Contains class for game state's get_hex method's return value.
 """
 from typing import Union
 
+from utility.coordinates import Coords
 from game_client.map_hexes import LimitedBonusHex, StaticHex
 from game_client.vehicles import Vehicle
-from utility.coordinates import Coords
 
 
 class GSHex:
