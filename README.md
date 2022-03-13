@@ -22,6 +22,7 @@ Use one of the following:
  - To play game with 3 simple bots: `python test_game.py`
  
 If you want to see GUI add `--gui` after file name (not supported by `test_game.py`)
+[![image.png](https://i.postimg.cc/Hxk50L3c/image.png)](https://postimg.cc/7CjfwwFw)
 ### Project structure
 - `server_interaction.py` - classes for interaction with server.
 - `game_client.py` - classes and fucntions needed to play game.
