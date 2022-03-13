@@ -17,7 +17,7 @@ class Coords:
 
     def __init__(self, coordinates: Union[CoordsDictTyping, CoordsTupleTyping]):
         if isinstance(coordinates, dict):
-            coordinates = tuple(coordinates.values())
+            coordinates = (coordinates["x"], coordinates["y"], coordinates["z"])
 
         self.x, self.y, self.z = coordinates
         self.max_dimension: int = max([abs(self.x), abs(self.y), abs(self.z)])
@@ -89,27 +89,32 @@ class Coords:
 
     def unit_vector(self, other: Coords) -> Coords:
         """
-        Calculates the unit vector (normalized vector) directed to given coordinates.
+        Calculates the unit vector (normalized vector) directed
+        to given coordinates.
 
         :param other: any other Coords object
-        :return: Coords object representing unit vector directed to given coordinates
+        :return: Coords object representing unit vector directed
+        to given coordinates
         """
         # noinspection PyTypeChecker
-        return Coords(
-            tuple(
-                map(
-                    lambda x: 0
-                    if x[0] - x[1] == 0
-                    else int((x[0] - x[1]) / abs(x[0] - x[1])),
-                    zip(other, self),
-                )
+        tuple_generator = map(
+            lambda x: 0
+            if x[0] - x[1] == 0
+            else int((x[0] - x[1]) / abs(x[0] - x[1])),
+            zip(other, self),
+        )
+        return Coords((
+            next(tuple_generator),
+            next(tuple_generator),
+            next(tuple_generator)
             )
         )
 
     @property
     def server_format(self) -> CoordsDictTyping:
         """
-        Converts coordinates to the server format with named dimensions as keys.
+        Converts coordinates to the server format
+        with named dimensions as keys.
         :return: coordinates dictionary
         """
         return {
