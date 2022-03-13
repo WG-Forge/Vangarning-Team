@@ -2,6 +2,7 @@ from typing import Optional
 
 from bot.actions_generator import ActionsGenerator
 from bot.bot import Bot
+from bot.bot_game_state import BotGameState
 from game_client.actions import Action
 from game_client.server_interaction import ActionCode
 from game_client.vehicles import Vehicle
@@ -16,8 +17,8 @@ class StepScoreBot(Bot):
     :param self.game_state: BotGameState object
     """
 
-    def __init__(self, game_map: MapDictTyping):
-        super().__init__(game_map)
+    def __init__(self, game_map: MapDictTyping, game_state_class=BotGameState):
+        super().__init__(game_map, game_state_class)
         self.actions_generator = ActionsGenerator(self.game_state)
 
     def get_actions(self, game_state: GameStateDictTyping) -> list[Action]:

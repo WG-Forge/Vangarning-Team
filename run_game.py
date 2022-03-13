@@ -1,8 +1,8 @@
 import threading
 from time import perf_counter
 
-from game_client.server_interaction import GameSession, ActionCode
 from bot.step_score_bot import StepScoreBot
+from game_client.server_interaction import ActionCode, GameSession
 
 
 def game_loop(bot, game):
@@ -17,7 +17,9 @@ def game_loop(bot, game):
             break
 
         if game_state["current_player_idx"] == game.player_id:
-            print(f'Round: {game_state["current_turn"]}, ' f"player: {game.player_name}")
+            print(
+                f'Round: {game_state["current_turn"]}, ' f"player: {game.player_name}"
+            )
             for action in bot.get_actions(game_state):
                 if action.action_code == ActionCode.SHOOT:
                     shots += 1
@@ -37,7 +39,7 @@ if __name__ == "__main__":
     game_name = "VT_test3"
 
     game_session = GameSession(
-        name="Bot_test_1", game=game_name, num_turns=45, num_players=3
+        name="Bot_test_1", game=game_name, num_players=3
     )
     game_session_1 = GameSession(
         name="Bot_test_2",
@@ -69,4 +71,3 @@ if __name__ == "__main__":
 #     game_session = GameSession(name="Bot_test_1")
 #     gbot = StepScoreBot(game_session.map)
 #     game_loop(gbot, game_session)
-

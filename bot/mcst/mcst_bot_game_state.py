@@ -1,3 +1,6 @@
+"""
+Contains game state class for MCST bot
+"""
 from bot.bot_game_state import BotGameState
 from game_client.actions import Action
 from game_client.map_hexes import Base, Catapult, HardRepair, LightRepair
@@ -6,6 +9,10 @@ from utility.custom_typings import MapDictTyping
 
 
 class MCSTBotGameState(BotGameState):
+    """
+    Game state that can fully simulate the game.
+
+    """
     def __init__(self, game_map: MapDictTyping):
         super().__init__(game_map)
 
@@ -20,6 +27,25 @@ class MCSTBotGameState(BotGameState):
             self.__apply_turn_action()
 
     def __apply_turn_action(self) -> None:
+        self.__turn_update_vehicles()
+        kill_points_sum = {}
+        capture_points_sum = {}
+        for player in self.players.values():
+            player.win_points["capture"] = sum(
+                v.capture_points for v in player.vehicles
+            )
+            capture_points_sum[player.idx] = player.win_points["capture"]
+            kill_points_sum[player.idx] = player.win_points["kill"]
+
+        players_with_max_capture_points = [
+            player for player in capture_points_sum if capture_points_sum[player] >= 5
+        ]
+        if len(players_with_max_capture_points) > 1:
+            self.winner = self.players[
+                max(kill_points_sum, key=lambda i: kill_points_sum[i])
+            ]
+
+    def __turn_update_vehicles(self) -> None:
         for vehicle in self.vehicles.values():
             gshex = self.get_hex(vehicle.position)
             player = self.players[vehicle.player_id]

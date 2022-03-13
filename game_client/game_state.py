@@ -35,6 +35,7 @@ class GameState:
         """
         self.game_map: GameMap = GameMap(game_map)
         self.finished: bool = False
+        self.winner: Optional[Player] = None
         self.num_turns: int = -1
         self.current_turn: int = -1
         self.current_player: Optional[Player] = None
@@ -57,6 +58,8 @@ class GameState:
 
         self.current_turn = data["current_turn"]
         self.current_player = self.players[data["current_player_idx"]]
+        self.finished = data["finished"]
+        self.winner = data["winner"] if data["winner"] is None else self.players[data["winner"]]
 
     def get_hex(self, coordinates: Coords) -> GSHex:
         """

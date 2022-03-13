@@ -1,7 +1,7 @@
 import time
 
-from bot import Bot
-from game_client import BotGameState
+from ..bot import Bot
+from ..bot_game_state import BotGameState
 
 
 # TODO: asynchronous programming

@@ -4,8 +4,8 @@ from utility.custom_typings import GameStateDictTyping
 
 
 class Bot:
-    def __init__(self, game_map):
-        self.game_state: BotGameState = BotGameState(game_map)
+    def __init__(self, game_map, game_state_class=BotGameState):
+        self.game_state: BotGameState = game_state_class(game_map)
 
     def get_actions(self, game_state: GameStateDictTyping) -> list[Action]:
         raise NotImplementedError
