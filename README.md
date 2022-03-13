@@ -52,12 +52,12 @@ If you want to see GUI add `--gui` (terminal_interface.py only, run_game.py runs
     - `gui.py` - Classes for graphic user interface.
     
 - #### `tests` module - Unit tests. WIP.
-    - `test_coords.py` - Tests for `Coords` class defined in `utility.coordinates.py`.
+    - `test_coords.py` - Tests for class `Coords` in `utility.coordinates.py`.
 
 - #### `utility` module - Files with utility classes.
     - `coordinates.py` - Contains class for map coordinates.
     - `custom_typing.py` - Project-specific typings.
     - `singleton.py` - Contains singleton meta class.
 
-- `estimator_coefficients_optimisation.py` - Functions to optimize `action_estimator.py` coefficients.
+- `estimator_coefficients_optimisation.py` - Functions to optimize `action_estimator.py` coefficients. WIP.
 - `terminal_interface.py` and `run_game.py` - *you can launch game from them!*

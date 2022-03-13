@@ -108,8 +108,7 @@ class Session:
 
         data_length = len(str(data))
         return struct.pack(
-            f"<ii{data_length}s", code, data_length,
-            json.dumps(data).encode("utf-8")
+            f"<ii{data_length}s", code, data_length, json.dumps(data).encode("utf-8")
         )
 
     def get(self, action: Union[ActionCode, int], data: Optional[dict] = None) -> dict:
@@ -232,8 +231,7 @@ class GameSession:
         return self.server.get(ActionCode.CHAT, {"message": message})
 
     def action(
-        self, action: Union[ActionCode, int],
-            vehicle_id: int, target: CoordsDictTyping
+        self, action: Union[ActionCode, int], vehicle_id: int, target: CoordsDictTyping
     ) -> dict:
         """
         ACTION server request.

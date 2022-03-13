@@ -98,16 +98,11 @@ class Coords:
         """
         # noinspection PyTypeChecker
         tuple_generator = map(
-            lambda x: 0
-            if x[0] - x[1] == 0
-            else int((x[0] - x[1]) / abs(x[0] - x[1])),
+            lambda x: 0 if x[0] - x[1] == 0 else int((x[0] - x[1]) / abs(x[0] - x[1])),
             zip(other, self),
         )
-        return Coords((
-            next(tuple_generator),
-            next(tuple_generator),
-            next(tuple_generator)
-            )
+        return Coords(
+            (next(tuple_generator), next(tuple_generator), next(tuple_generator))
         )
 
     @property

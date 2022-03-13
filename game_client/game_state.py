@@ -6,13 +6,13 @@ Contains class to store game state.
 
 from typing import Optional
 
-from utility.coordinates import Coords
-from utility.custom_typings import (CoordsDictTyping, GameStateDictTyping,
-                                    MapDictTyping, VehicleDictTyping)
 from game_client.map import GameMap
 from game_client.player import Player
 from game_client.state_hex import GSHex
 from game_client.vehicles import VEHICLE_CLASSES, Vehicle
+from utility.coordinates import Coords
+from utility.custom_typings import (CoordsDictTyping, GameStateDictTyping,
+                                    MapDictTyping, VehicleDictTyping)
 
 
 class OutOfBoundsError(Exception):
