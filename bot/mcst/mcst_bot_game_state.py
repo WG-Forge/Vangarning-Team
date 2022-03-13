@@ -13,6 +13,7 @@ class MCSTBotGameState(BotGameState):
     Game state that can fully simulate the game.
 
     """
+
     def __init__(self, game_map: MapDictTyping):
         super().__init__(game_map)
 

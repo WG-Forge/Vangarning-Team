@@ -59,7 +59,9 @@ class GameState:
         self.current_turn = data["current_turn"]
         self.current_player = self.players[data["current_player_idx"]]
         self.finished = data["finished"]
-        self.winner = data["winner"] if data["winner"] is None else self.players[data["winner"]]
+        self.winner = (
+            data["winner"] if data["winner"] is None else self.players[data["winner"]]
+        )
 
     def get_hex(self, coordinates: Coords) -> GSHex:
         """
@@ -122,7 +124,7 @@ class GameState:
         """
         new_pos = Coords(vehicle["position"])
         vehicle_obj = self.__get_vehicle_by_id(int(vid))
-        del self.vehicles[vehicle_obj.position]
+        self.vehicles.pop(vehicle_obj.position)
         vehicle_obj.update(vehicle)
         self.vehicles[new_pos] = vehicle_obj
 
@@ -131,7 +133,7 @@ class GameState:
             if vehicle.vehicle_id == vehicle_id:
                 return vehicle
 
-        raise KeyError("There is no vehicle with such id")
+        raise KeyError(f"There is no vehicle with id {vehicle_id}, {type(vehicle_id)}")
 
     def __update_catapults(self, catapult_usages: list[CoordsDictTyping]) -> None:
         """

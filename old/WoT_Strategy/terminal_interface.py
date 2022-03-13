@@ -6,9 +6,10 @@ a game via a terminal command
 
 import sys
 
-from game_client import game_loop
 from server_interaction import GameSession, WrongPayloadFormatError
 from step_score_bot import StepScoreBot
+
+from game_client import game_loop
 
 HELP_TEXT = (
     "Usage:\n"
@@ -33,6 +34,7 @@ def game_launch(bot, game, gui):
         # Written here as it opens empty window if --gui was not provided
         # if imported at the top of the file
         from gui import WoTStrategyApp
+
         WoTStrategyApp(game.map, bot, game).run()
     else:
         game_loop(bot, game)
@@ -51,7 +53,9 @@ def main():
         game = game_init(name=sys.argv[1 + len_modifier])
 
     elif len(sys.argv) == 3 + len_modifier:
-        game = game_init(name=sys.argv[1 + len_modifier], game=sys.argv[2 + len_modifier])
+        game = game_init(
+            name=sys.argv[1 + len_modifier], game=sys.argv[2 + len_modifier]
+        )
 
     elif len(sys.argv) == 5 + len_modifier:
         game = game_init(

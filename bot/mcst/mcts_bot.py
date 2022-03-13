@@ -1,13 +1,12 @@
 import time
-from os import cpu_count
 from multiprocessing import Pool
+from os import cpu_count
 from queue import Queue
 
-
 from bot.bot import Bot
-from bot.mcst.mcst_bot_game_state import MCSTBotGameState
-from bot.mcst.mcst import (MonteCarloSearchTree, MCSTNode,
+from bot.mcst.mcst import (MCSTNode, MonteCarloSearchTree,
                            action_to_bytestring, bytestr_to_action)
+from bot.mcst.mcst_bot_game_state import MCSTBotGameState
 from game_client.actions import Action
 
 
@@ -49,7 +48,9 @@ class MCTSBot(Bot):
             pass
             # TODO: exception
 
-        single_vehicle_time_limit = self.time_limit / len(list(game_state.current_player.ordered_vehicle_iter))
+        single_vehicle_time_limit = self.time_limit / len(
+            list(game_state.current_player.ordered_vehicle_iter)
+        )
 
         actions: list[Action] = []
         for vehicle in self.tree.game_state.current_player.ordered_vehicle_iter:

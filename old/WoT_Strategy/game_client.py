@@ -1,7 +1,7 @@
 """
 Contains class for Game state and functions to play the game.
 """
-from typing import Union, Iterator
+from typing import Iterator, Union
 
 import hexes
 from server_interaction import ActionCode, GameSession
@@ -54,8 +54,9 @@ class GameMap:
     """
     Contains static information about game map.
 
-    
+
     """
+
     def __init__(self, game_map: dict):
         self.map_radius: int = game_map["size"]
         self.map_name: str = game_map["name"]
@@ -92,15 +93,14 @@ class GameMap:
         return max(map(abs, coords)) < self.map_radius
 
     def get_hexes_on_dist(
-            self, position: CoordsTuple, dist: int
+        self, position: CoordsTuple, dist: int
     ) -> Iterator[CoordsTuple]:
         """
         Creates iterator with hexes at given distance from the position.
 
         """
         return filter(
-            lambda pos: self.are_valid_coords(pos),
-            hexes.get_ring(position, dist)
+            lambda pos: self.are_valid_coords(pos), hexes.get_ring(position, dist)
         )
 
 

@@ -111,7 +111,7 @@ class Session:
 
 class GameStateLogger:
     """
-      Class for replay the game
+    Class for replay the game
 
     """
 
@@ -120,7 +120,7 @@ class GameStateLogger:
 
     def log_game_state(self, game_state):
         self.log_file.write(json.dumps(game_state))
-        self.log_file.write('\n')
+        self.log_file.write("\n")
 
     def __del__(self):
         self.log_file.close()

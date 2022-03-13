@@ -98,8 +98,8 @@ class WoTStrategyRoot(Widget):
     def create_map(self, map_data: dict):
         for x in range(-map_data["size"], map_data["size"] + 1):
             for y in range(
-                    max(-map_data["size"], -map_data["size"] - x),
-                    min(map_data["size"] + 1, map_data["size"] - x + 1),
+                max(-map_data["size"], -map_data["size"] - x),
+                min(map_data["size"] + 1, map_data["size"] - x + 1),
             ):
                 z = -x - y
                 hex = Hex()
