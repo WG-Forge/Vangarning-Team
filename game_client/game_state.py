@@ -11,7 +11,7 @@ from game_client.state_hex import GSHex
 from game_client.vehicles import VEHICLE_CLASSES, Vehicle
 from utility.coordinates import Coords
 from utility.custom_typings import (CoordsDictTyping, GameStateDictTyping,
-                                    MapDictTyping, VehicleDictTyping)
+                                    MapDictTyping)
 
 
 class OutOfBoundsError(Exception):
@@ -126,21 +126,6 @@ class GameState:
                 vehicle_to_buff = self.vehicles[new_pos]
                 vehicles_buffer[vehicle_to_buff.vehicle_id] = vehicle_to_buff
             self.vehicles[new_pos] = vehicle_obj
-
-    def __update_vehicle(self, vid: str, vehicle: VehicleDictTyping) -> None:
-        """
-        Changes actor position in self.vehicles and
-        calls actor's update method.
-
-        :param vid: actor id
-        :param vehicle: part of GAME_STATE response with
-        an info about the actor
-        """
-        new_pos = Coords(vehicle["position"])
-        vehicle_obj = self.__get_vehicle_by_id(int(vid))
-        self.vehicles.pop(vehicle_obj.position)
-        vehicle_obj.update(vehicle)
-        self.vehicles[new_pos] = vehicle_obj
 
     def __get_vehicle_by_id(self, vehicle_id: int) -> Vehicle:
         for vehicle in self.vehicles.values():

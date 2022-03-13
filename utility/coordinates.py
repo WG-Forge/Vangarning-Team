@@ -9,6 +9,8 @@ from typing import Union
 from utility.custom_typings import CoordsDictTyping, CoordsTupleTyping
 
 
+# pylint: disable=invalid-name
+# x, y, z are valid names
 class Coords:
     """
     Class for describing hex position in cubic coordinates system.

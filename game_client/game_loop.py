@@ -1,8 +1,18 @@
+"""
+Contains functions to play the game.
+
+"""
 from game_client.server_interaction import ActionCode
 from gui.game_state_property import game_state_property
 
 
 def game_loop(bot, game):
+    """
+    Function to play the game.
+
+    :param bot: StepScoreBot instance
+    :param game: GameSession instance
+    """
     while True:
         game_state = game.game_state()
 
