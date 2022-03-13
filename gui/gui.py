@@ -2,9 +2,6 @@
 Handles graphic interface
 """
 
-import os
-
-os.environ["KIVY_NO_ARGS"] = "1"
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
