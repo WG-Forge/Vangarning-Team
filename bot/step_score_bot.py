@@ -1,3 +1,8 @@
+"""
+Contains class for the bot that uses action estimation for picking action.
+
+"""
+
 from typing import Optional
 
 from bot.action_estimator import ActionEstimator
@@ -9,6 +14,8 @@ from game_client.vehicles import Vehicle
 from utility.custom_typings import GameStateDictTyping, MapDictTyping
 
 
+# pylint: disable=too-few-public-methods
+# Only one method is needed here
 class StepScoreBot(Bot):
     """
     Bot that uses formula to choose actions.
@@ -24,7 +31,7 @@ class StepScoreBot(Bot):
     ):
         super().__init__(game_map, game_state_class)
         if estimator_weights is None:
-            estimator_weights = [1, 1, 1, 1]
+            estimator_weights = [1, 1, 1, 1, 1]
         self.actions_generator = ActionsGenerator(self.game_state)
         self.action_estimator: ActionEstimator = ActionEstimator(
             self.game_state, estimator_weights
@@ -52,6 +59,8 @@ class StepScoreBot(Bot):
     def __get_possible_actions(self, actor: Vehicle) -> list[Action]:
         actions = self.actions_generator(actor)
 
+        # pylint: disable=unnecessary-lambda
+        # Lambda is needed here
         actions.sort(key=lambda step: self.action_estimator(step), reverse=False)
 
         return actions

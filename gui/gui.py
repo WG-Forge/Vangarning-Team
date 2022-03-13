@@ -8,19 +8,15 @@ os.environ["KIVY_NO_ARGS"] = "1"
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
-from kivy.properties import (
-    ListProperty,
-    NumericProperty,
-    ObjectProperty,
-    ReferenceListProperty,
-)
+from kivy.properties import (ListProperty, NumericProperty, ObjectProperty,
+                             ReferenceListProperty)
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.effectwidget import EffectWidget
 from kivy.uix.scatter import Scatter
 from kivy.uix.widget import Widget
-from kivy.uix.effectwidget import EffectWidget
 
-from utility.custom_typings import CoordsDictTyping, CoordsTupleTyping
 from utility.coordinates import Coords
+from utility.custom_typings import CoordsDictTyping, CoordsTupleTyping
 
 COLORS = {
     "black": (0, 0, 0),

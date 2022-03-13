@@ -7,6 +7,8 @@ from bot.bot import Bot
 from bot.mcst.mcst import (MCSTNode, MonteCarloSearchTree,
                            action_to_bytestring, bytestr_to_action)
 from bot.mcst.mcst_bot_game_state import MCSTBotGameState
+# pylint: skip-file
+# Still work in progress
 from game_client.actions import Action
 
 

@@ -37,8 +37,8 @@ def game_launch(bot, game, gui):
 
         # Written here as it opens empty window if --gui was not provided
         # if imported at the top of the file
-        from gui.gui import WoTStrategyApp
         from gui.game_state_property import game_state_property
+        from gui.gui import WoTStrategyApp
 
         WoTStrategyApp(game.map, game_state_property).run()
 
