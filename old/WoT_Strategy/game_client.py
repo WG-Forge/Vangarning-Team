@@ -1,10 +1,12 @@
-from queue import PriorityQueue
-from typing import Union
+"""
+Contains class for Game state and functions to play the game.
+"""
+from typing import Union, Iterator
 
-import hex
-from bot import Bot
+import hexes
 from server_interaction import ActionCode, GameSession
-from settings import NEIGHBOURS_OFFSETS, TYPE_ORDER, HexCode
+from settings import (NEIGHBOURS_OFFSETS, TYPE_ORDER, CoordsDict, CoordsTuple,
+                      HexCode)
 from vehicle import AtSpg, HeavyTank, LightTank, MediumTank, Spg, Vehicle
 
 TYPES_TO_CLASSES = {
@@ -17,31 +19,89 @@ TYPES_TO_CLASSES = {
 
 
 class Action:
+    """
+    Class containing information and methods for game action.
+    """
+
     def __init__(
         self,
         action_code: ActionCode,
         actor: Vehicle,
-        target: tuple[int, int, int],
+        target: CoordsTuple,
         *affected_vehicles: Vehicle,
     ):
         self.action_code: ActionCode = action_code
         self.actor: Vehicle = actor
-        self.target: tuple[int, int, int] = target
-        self.affected_vehicles = affected_vehicles
+        self.target: CoordsTuple = target
+        self.__affected_vehicles = affected_vehicles
 
     @property
-    def server_format(self):
-        return self.action_code, self.actor.pid, hex.tuple_to_dict(self.target)
+    def server_format(self) -> tuple[ActionCode, int, CoordsDict]:
+        """
+        Returns action in server format: ActionCode + actor id + target hex.
+        """
+        return self.action_code, self.actor.pid, hexes.tuple_to_dict(self.target)
+
+    @property
+    def affected_vehicles(self):
+        """
+        Returns list of affected vehicles objects.
+        """
+        return self.__affected_vehicles
 
 
-# TODO: Replace a_star_search in can_move method to smth faster
-#  but less universal
+class GameMap:
+    """
+    Contains static information about game map.
 
-# TODO: Use logging instead of printing in game_loop function
-# TODO: Add going back to spawn at the next turn if hp == 0 to
-#  update_from_action
-# TODO: Try to prune vehicles, vehicles to players into one data structure
-# TODO: Maybe it will be a good idea to change NEIGHBOURS_OFFSETS to smth else
+    
+    """
+    def __init__(self, game_map: dict):
+        self.map_radius: int = game_map["size"]
+        self.map_name: str = game_map["name"]
+        self.base: list[CoordsTuple] = ...
+        self.obstacles = ...
+        self.light_repairs: list[CoordsTuple] = ...
+        self.hard_repairs: list[CoordsTuple] = ...
+        self.catapults: list[CoordsTuple] = ...
+        self.spawn_positions: list[CoordsTuple] = []
+
+    def is_obstacle(self, position: CoordsTuple):
+        return position in self.obstacles
+
+    def is_base(self, position: CoordsTuple):
+        return position in self.base
+
+    def is_light_repair(self, position: CoordsTuple):
+        return position in self.light_repairs
+
+    def is_hard_repair(self, position: CoordsTuple):
+        return position in self.hard_repairs
+
+    def is_catapult(self, position: CoordsTuple):
+        return position in self.catapults
+
+    def is_spawn_position(self, position: CoordsTuple):
+        return position in self.spawn_positions
+
+    def are_valid_coords(self, coords: CoordsTuple) -> bool:
+        """
+        Tells if hex with given coordinates is in map boundaries.
+
+        """
+        return max(map(abs, coords)) < self.map_radius
+
+    def get_hexes_on_dist(
+            self, position: CoordsTuple, dist: int
+    ) -> Iterator[CoordsTuple]:
+        """
+        Creates iterator with hexes at given distance from the position.
+
+        """
+        return filter(
+            lambda pos: self.are_valid_coords(pos),
+            hexes.get_ring(position, dist)
+        )
 
 
 class BotGameState:
@@ -54,11 +114,7 @@ class BotGameState:
         """
         :param game_map: MAP response from the server
         """
-        # Map info
-        self.map_radius: int = game_map["size"]
-        self.map_name: str = game_map["name"]
-        self.base, self.obstacles = self.__parse_map_content(game_map)
-        self.spawn_positions: set = set()
+        self.map = GameMap(game_map)
 
         # Game state info
         self.is_game_state_populated = False
@@ -153,8 +209,8 @@ class BotGameState:
                 player_id=vehicle["player_id"],
                 pid=vid,
                 hp=vehicle["health"],
-                spawn_position=hex.dict_to_tuple(vehicle["spawn_position"]),
-                position=hex.dict_to_tuple(vehicle["position"]),
+                spawn_position=hexes.dict_to_tuple(vehicle["spawn_position"]),
+                position=hexes.dict_to_tuple(vehicle["position"]),
                 capture_points=vehicle["capture_points"],
             )
             self.vehicles_to_players[vehicle_obj.player_id].append(vehicle_id)
@@ -171,177 +227,12 @@ class BotGameState:
         """
         for vid, vehicle in vehicles.items():
             vehicle_id = int(vid)
-            del self.vehicles_positions[self.vehicles[vehicle_id].position]
+            if self.vehicles[vehicle_id].position in self.vehicles_positions:
+                del self.vehicles_positions[self.vehicles[vehicle_id].position]
             self.vehicles[vehicle_id].update(vehicle)
             self.vehicles_positions[tuple(vehicle["position"].values())] = vehicle_id
 
-    def __parse_map_content(self, game_map: dict) -> tuple[set[tuple], set[tuple]]:
-        """
-        Puts info about all game content to instances attributes.
-
-        :param game_map: MAP server response
-        :return: two sets with hexes corresponding to exact content type
-        """
-        obstacles = set(tuple(i.values()) for i in game_map["content"]["obstacle"])
-        base = set(tuple(i.values()) for i in game_map["content"]["base"])
-
-        return base, obstacles
-
-    def a_star_search(self, start, target):
-        frontier = PriorityQueue()
-        frontier.put(start, False)
-        came_from = {start: None}
-        cost_so_far = {start: 0}
-
-        while not frontier.empty():
-            current = frontier.get()
-
-            if current == target:
-                break
-
-            for next_hex in self.__get_neighbours(current):
-                new_cost = cost_so_far[current] + (
-                    1 if next_hex not in self.obstacles else 2000000
-                )
-                if next_hex not in cost_so_far or new_cost < cost_so_far[next_hex]:
-                    cost_so_far[next_hex] = new_cost
-                    priority = new_cost + (
-                        sum(map(lambda x: x[0] - x[1], zip(next_hex, target)))
-                    )
-                    frontier.put(next_hex, priority)
-                    came_from[next_hex] = current
-
-        return cost_so_far[target]
-
-    def __get_neighbours(self, coords: tuple[int, int, int]):
-        """
-        Help function for A* search returns all 6 closest neighbours.
-
-        :param coords:
-        :return:
-        """
-        neighbours = []
-
-        for offset in NEIGHBOURS_OFFSETS[0]:
-            neighbour = hex.summarize(coords, offset)
-            if self.are_valid_coords(neighbour):
-                neighbours.append(neighbour)
-
-        return neighbours
-
-    # Will be moved to Vehicles classes
-    def _can_reach(
-        self, max_len: int, start: tuple[int, int, int], target: tuple[int, int, int]
-    ) -> bool:
-        """
-        Tells if there is a path from start to finish with given length
-
-        :param max_len: max length of the path
-        :param start: start hex
-        :param target: finish hex
-        :return:
-        """
-        if hex.straight_dist(start, target) > max_len:
-            return False
-
-        return self.a_star_search(start, target) <= max_len
-
-    def are_valid_coords(self, coords: tuple[int, int, int]) -> bool:
-        """
-        Tells if hex with given coordinates is in map boundaries.
-        :param coords:
-        :return:
-        """
-        return max(map(abs, coords)) < self.map_radius
-
-    def get_vehicle_by_id(self, vehicle_id: int) -> Vehicle:
-        """
-        Returns vehicle with given id.
-
-        :param vehicle_id:
-        :return:
-        """
-        return self.vehicles[vehicle_id]
-
-    def is_vehicle(self, hex_value: int) -> bool:
-        """
-        Tells if given hex value corresponds to any vehicle.
-
-        :param hex_value:
-        :return:
-        """
-        return hex_value >= 1
-
-    def is_enemy_tank(self, position: tuple[int, int, int]) -> bool:
-        """
-        Tells if object at the given hex is enemy tank for current player.
-
-        :param position: position of hex
-        :return:
-        """
-        hex_value = self.get_hex_value(position)
-        return (
-            self.is_vehicle(hex_value)
-            and hex_value not in self.vehicles_to_players[self.current_player_idx]
-        )
-
-    # Will be moved to Vehicles classes
-    def can_move(self, actor: Vehicle, target: tuple[int, int, int]) -> bool:
-        """
-        Tells if actor can move to given position.
-
-        :param actor: vehicle that needs to be checked
-        :param target: coordinates of target hex
-        :return: can actor move or not
-        """
-        # target is someone else's spawn position
-        if target in self.spawn_positions and target != actor.spawn_position:
-            return False
-        # target is obstacle
-        if target in self.obstacles:
-            return False
-        # target is occupied by another vehicle
-        if int(self.get_hex_value(target)) >= 1:
-            return False
-
-        return self._can_reach(actor.speed_points, actor.position, target)
-
-    # Will be moved to Vehicles classes
-    def can_shoot(self, actor: Vehicle, coords: tuple[int, int, int]) -> bool:
-        """
-        Tells if actor can and have reason to shoot given hex.
-
-        :param actor: vehicle that needs to be checked
-        :param coords: coordinates of target hex
-        :return: can actor shoot or not
-        """
-        hex_status = self.get_hex_value(coords)
-        if not self.is_vehicle(hex_status):
-            return False
-
-        if not actor.is_target_in_shooting_range(coords):
-            return False
-
-        target_vehicle = self.get_vehicle_by_id(hex_status)
-        if target_vehicle in self.current_player_vehicles:
-            return False
-        if target_vehicle.hp == 0:
-            return False
-
-        return self.__neutrality_check(actor, target_vehicle)
-
-    def __neutrality_check(self, actor: Vehicle, target_vehicle: Vehicle):
-        if actor.player_id in self.attack_matrix[target_vehicle.player_id]:
-            return True
-
-        for player, attacked_players in self.attack_matrix.items():
-            if player not in (actor.player_id, target_vehicle.player_id):
-                if target_vehicle.player_id in attacked_players:
-                    return False
-
-        return True
-
-    def get_hex_value(self, coords: tuple[int, int, int]) -> Union[HexCode, int]:
+    def get_hex_value(self, coords: CoordsTuple) -> Union[HexCode, int]:
         """
         Returns numeric representation of object at given hex.
 
@@ -358,12 +249,95 @@ class BotGameState:
         except KeyError:
             if coords in self.base:
                 return HexCode.BASE
-            elif coords in self.obstacles:
+            if coords in self.obstacles:
                 return HexCode.OBSTACLE
-            else:
-                return HexCode.EMPTY
+            return HexCode.EMPTY
 
-    def get_close_enemies(self, position: tuple[int, int, int]) -> list[Vehicle]:
+    def get_vehicle_by_id(self, vehicle_id: int) -> Vehicle:
+        """
+        Returns vehicle with given id.
+
+        """
+        return self.vehicles[vehicle_id]
+
+    def is_vehicle(self, position: CoordsTuple) -> bool:
+        """
+        Tells if given hex value corresponds to any vehicle.
+
+        """
+        return position in self.vehicles_positions
+
+    def is_enemy_vehicle(self, position: CoordsTuple) -> bool:
+        """
+        Tells if object at the given hex is enemy tank for current player.
+
+        :param position: position of hex
+        :return:
+        """
+        if not self.is_vehicle(position):
+            return False
+        if (
+            self.get_hex_value(position)
+            not in self.vehicles_to_players[self.current_player_idx]
+        ):
+            return True
+
+        return False
+
+    def can_move(self, actor: Vehicle, target: CoordsTuple) -> bool:
+        """
+        Tells if actor can move to given position.
+
+        :param actor: vehicle that needs to be checked
+        :param target: coordinates of target hex
+        :return: can actor move or not
+        """
+        # target is someone else's spawn position
+        if target in self.spawn_positions and target != actor.spawn_position:
+            return False
+        # target is obstacle
+        if target in self.obstacles:
+            return False
+        # target is occupied by another vehicle
+        if self.is_vehicle(target):
+            return False
+
+        return self.is_hex_reachable(actor, target)
+
+    def can_shoot(self, actor: Vehicle, target: CoordsTuple) -> bool:
+        """
+        Tells if actor can and have reason to shoot given hex.
+
+        :param actor: vehicle that needs to be checked
+        :param target: coordinates of target hex
+        :return: can actor shoot or not
+        """
+        if not self.is_vehicle(target):
+            return False
+
+        if not actor.target_in_shooting_range(target, self.obstacles):
+            return False
+
+        target_vehicle = self.get_vehicle_by_id(self.get_hex_value(target))
+        if target_vehicle in self.current_player_vehicles:
+            return False
+        if target_vehicle.hp <= 0:
+            return False
+
+        return self.__neutrality_check(actor, target_vehicle)
+
+    def __neutrality_check(self, actor: Vehicle, target_vehicle: Vehicle):
+        if actor.player_id in self.attack_matrix[target_vehicle.player_id]:
+            return True
+
+        for player, attacked_players in self.attack_matrix.items():
+            if player not in (actor.player_id, target_vehicle.player_id):
+                if target_vehicle.player_id in attacked_players:
+                    return False
+
+        return True
+
+    def get_close_enemies(self, position: CoordsTuple) -> list[Vehicle]:
         """
         Returns enemies which can shoot hex with given position.
 
@@ -373,9 +347,9 @@ class BotGameState:
         enemies = []
         for dist in NEIGHBOURS_OFFSETS:
             for offset in dist:
-                hex_value = self.get_hex_value(hex.summarize(position, offset))
-                if int(hex_value) >= 1:
-                    enemy = self.vehicles[hex_value]
+                neighbour_pos = hexes.summarize(position, offset)
+                if self.is_vehicle(neighbour_pos):
+                    enemy = self.vehicles[self.vehicles_positions[neighbour_pos]]
                     if self.can_shoot(enemy, position):
                         enemies.append(enemy)
 
@@ -383,12 +357,15 @@ class BotGameState:
 
     @property
     def current_player_vehicles(self) -> list[Vehicle]:
+        """
+        Returns list of vehicle objects with player_id == current_player_id.
+        """
         return [
             self.vehicles[i] for i in self.vehicles_to_players[self.current_player_idx]
         ]
 
 
-def game_loop(bot: Bot, game: GameSession):
+def game_loop(bot, game: GameSession):
     """
     Plays the given game with the given bot.
 
@@ -396,30 +373,11 @@ def game_loop(bot: Bot, game: GameSession):
     :param game:
     :return:
     """
-    while True:
-        game_state = game.game_state()
-
-        if game_state["finished"]:
-            print("You won" if game_state["winner"] == game.player_id else "You lost")
-            print(f"Winner: {game_state['winner']}")
-            break
-
-        if game_state["current_player_idx"] == game.player_id:
-            print(
-                f'Round: {game_state["current_turn"]}, ' f"player: {game.player_name}"
-            )
-            for action in bot.get_actions(game_state):
-                game.action(*action.server_format)
-                print(
-                    f"  Action: "
-                    f'{"shoot" if action.action_code == ActionCode.SHOOT else "move"}'
-                    f" Actor: {action.actor} Target: {action.target}"
-                )
-
-        game.turn()
+    while game_tick(bot, game) is not None:
+        pass
 
 
-def game_tick(bot: Bot, game: GameSession):
+def game_tick(bot, game: GameSession):
     """
     Performs full turn in the game
     :param bot:
@@ -427,7 +385,6 @@ def game_tick(bot: Bot, game: GameSession):
     :return:
     """
     game_state = game.game_state()
-    game.get_game_state_logger().log_game_state(game_state)
 
     if game_state["finished"]:
         print("You won" if game_state["winner"] == game.player_id else "You lost")

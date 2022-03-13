@@ -1,0 +1,61 @@
+#:kivy 2.0.0
+#:import HEX_SIZE gui.HEX_SIZE
+<HPBar>:
+    max_hp: 2
+    hp: self.max_hp
+    single_bar_width: 5
+    height: self.parent.height * 0.3
+    outline_width: self.height * 0.15
+    width: self.single_bar_width * self.max_hp + (self.max_hp + 1) * self.outline_width
+    pos: self.parent.x + (self.parent.width - self.width) * 0.5, self.parent.y - self.height
+    single_bar_size: self.single_bar_width, self.height - self.outline_width * 2
+
+
+<Vehicle>:
+    hp_bar: bar
+    size: HEX_SIZE *1.5,HEX_SIZE * 0.866025 * 1.5
+    color: 1, 0, 0
+    file: "assets/MT.png"
+    canvas:
+        Color:
+            rgb: self.color
+        Rectangle:
+            pos: self.center_x - self.width/2, self.center_y - self.height/2
+            size: self.size
+            source: self.file
+    HPBar:
+        id: bar
+
+
+<Hex>:
+    side: HEX_SIZE
+    size: self.side * 2, self.side * 0.866025 * 2
+    color: 0.5, 0.5, 0.5
+
+    canvas:
+        Color:
+            rgb: self.color
+        Rectangle:
+            pos: self.x + self.side * 0.5, self.y
+            size: self.side, self.side * 0.866025 * 2
+        Triangle:
+            points: self.x + self.side * 0.5, self.y, self.x, self.y + self.side * 0.866025, self.x + self.side * 0.5, self.y + self.side * 0.866025 * 2
+        Triangle:
+            points: self.x + self.side * 1.5, self.y + self.side * 0.866025 * 2, self.x + self.side * 2, self.y + self.side * 0.866025, self.x + self.side * 1.5, self.y
+        Color:
+            rgb: 0, 0, 0
+        Line:
+            points: self.x + self.side * 0.5, self.y, self.x, self.y + self.side * 0.866025, self.x + self.side * 0.5, self.y + self.side * 0.866025 * 2, self.x + self.side * 1.5, self.y + self.side * 0.866025 * 2, self.x + self.side * 2, self.y + self.side * 0.866025, self.x + self.side * 1.5, self.y
+            width: 1
+            close: True
+
+
+
+<WoTStratagyRoot>:
+
+    canvas:
+        Color:
+            rgb: 0, 0, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
