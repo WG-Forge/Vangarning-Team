@@ -88,7 +88,8 @@ class ActionEstimator:
         if prev_pos_hex_type is Base and new_pos_hex_type is not Base:
             return self.weights[2] * -actor.capture_points
         if prev_pos_hex_type is Base and new_pos_hex_type is Base:
-            return self.weights[2] * 1
+            if self.__get_amount_of_players_on_base() <= 2:
+                return self.weights[2] * 1
         return 0
 
     def estimate_targets(self, damage: int, affected_vehicles: list[Vehicle]) -> float:
@@ -131,3 +132,11 @@ class ActionEstimator:
                 result.append(vehicle)
 
         return result
+
+    def __get_amount_of_players_on_base(self):
+        result = set()
+        for vehicle in self.game_state.vehicles.values():
+            if self.game_state.get_hex(vehicle.position).map_hex is Base():
+                result.add(vehicle.player_id)
+
+        return len(result)

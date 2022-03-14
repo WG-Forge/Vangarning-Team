@@ -7,6 +7,7 @@ from game_client.server_interaction import GameSession
 from gui.game_state_property import game_state_property
 from gui.gui import WoTStrategyApp
 
+
 if __name__ == "__main__":
     game_name = "VT_test"
 
@@ -20,9 +21,9 @@ if __name__ == "__main__":
         game=game_name,
     )
 
-    bot_1 = StepScoreBot(game_session.map, estimator_weights=[1, 2, 0.4, 0.2, 1])
-    bot_2 = StepScoreBot(game_session.map, estimator_weights=[2, 2, 0.1, 0.04, 1])
-    bot_3 = StepScoreBot(game_session.map, estimator_weights=[4, 3, 0.7, 0.6, 1])
+    bot_1 = StepScoreBot(game_session.map)
+    bot_2 = StepScoreBot(game_session.map)
+    bot_3 = StepScoreBot(game_session.map)
 
     tr1 = threading.Thread(target=game_loop, args=(bot_1, game_session))
     tr2 = threading.Thread(target=game_loop, args=(bot_2, game_session_1))

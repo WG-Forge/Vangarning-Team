@@ -14,6 +14,9 @@ from game_client.vehicles import Vehicle
 from utility.custom_typings import GameStateDictTyping, MapDictTyping
 
 
+OPTIMAL_WEIGHTS = [0.5, 0.1, -1, -3.5, 5]
+
+
 # pylint: disable=too-few-public-methods
 # Only one method is needed here
 class StepScoreBot(Bot):
@@ -31,7 +34,7 @@ class StepScoreBot(Bot):
     ):
         super().__init__(game_map, game_state_class)
         if estimator_weights is None:
-            estimator_weights = [1, 1, 1, 1, 1]
+            estimator_weights = OPTIMAL_WEIGHTS
         self.actions_generator = ActionsGenerator(self.game_state)
         self.action_estimator: ActionEstimator = ActionEstimator(
             self.game_state, estimator_weights
