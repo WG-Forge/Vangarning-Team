@@ -1,0 +1,107 @@
+#: kivy 2.0.0
+#: import ew kivy.uix.effectwidget
+#: set MAX_HP_BARS 3
+
+<SingleHPBar>:
+    canvas:
+        Color:
+            rgb: 0, 1, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+<HPBar>:
+    hex_size: 25
+    max_hp: 0
+    hp: 0
+    size: self.hex_size * 1.5 * self.max_hp / MAX_HP_BARS, self.hex_size * 1.5 * 0.3
+    layout: layout_id
+    offset: (self.hex_size * 2 - self.width) / 2
+    canvas:
+        Color:
+            rgba: 1, 1, 1, 0.5
+        Rectangle:
+            pos: self.x + self.offset, self.y
+            size: self.size
+    BoxLayout:
+        id: layout_id
+        pos: self.parent.x + self.parent.offset, self.parent.y
+        size: self.parent.size
+        orientation: 'horizontal'
+        padding: self.height * 0.15
+        spacing: self.height * 0.25
+
+
+<Entity>:
+    hex_size: 25
+    x_coord: 0
+    y_coord: 0
+    x: self.x_coord * self.hex_size - self.width * 0.5
+    y: self.y_coord * self.hex_size - self.height * 0.5
+
+
+<Vehicle>:
+    hp_bar: bar_id
+    size: self.hex_size * 2, self.hex_size * 2 * 0.866025
+    color: 1, 0, 0
+    file: "assets/MT.png"
+    canvas:
+        Color:
+            rgb: self.color
+        Rectangle:
+            pos: self.center_x - self.width/2, self.center_y - self.height/2
+            size: self.size
+            source: self.file
+
+    HPBar:
+        id: bar_id
+        x: self.parent.x
+        y: self.parent.y - self.parent.height * 0.3
+
+
+<Hex>:
+    side: self.hex_size
+    size: self.side * 2, self.side * 0.866025 * 2
+    color: 0.5, 0.5, 0.5
+    canvas:
+        Color:
+            rgb: self.color
+        Rectangle:
+            pos: self.x + self.side * 0.5, self.y
+            size: self.side, self.side * 0.866025 * 2
+        Triangle:
+            points: self.x + self.side * 0.5, self.y, self.x, self.y + self.side * 0.866025, self.x + self.side * 0.5, self.y + self.side * 0.866025 * 2
+        Triangle:
+            points: self.x + self.side * 1.5, self.y + self.side * 0.866025 * 2, self.x + self.side * 2, self.y + self.side * 0.866025, self.x + self.side * 1.5, self.y
+        Color:
+            rgb: 0, 0, 0
+        Line:
+            points: self.x + self.side * 0.5, self.y, self.x, self.y + self.side * 0.866025, self.x + self.side * 0.5, self.y + self.side * 0.866025 * 2, self.x + self.side * 1.5, self.y + self.side * 0.866025 * 2, self.x + self.side * 2, self.y + self.side * 0.866025, self.x + self.side * 1.5, self.y
+            width: 1
+            close: True
+
+
+<SpecialHex>:
+    size: self.hex_size * 2, self.hex_size * 0.866025 * 2
+    color: 1, 1, 1
+    uses: 0
+    file: ""
+    canvas:
+        Color:
+            rgb: self.color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+            source: self.file
+
+
+<MyScatter>:
+    hex_size: 25
+
+<WoTStrategyRoot>:
+    hex_size: 25
+    scatter: scatter_id
+    effects: ew.FXAAEffect(),
+    MyScatter:
+        id: scatter_id
