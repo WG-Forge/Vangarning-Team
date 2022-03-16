@@ -20,7 +20,6 @@ jobs:
       run: |
         flake8 --ignore=E501,W503 $(git ls-files '*.py')
         pylint $(git ls-files '*.py')
-        mypy $(git ls-files '*.py')
 
     - name: Launch tests
       run: pytest
