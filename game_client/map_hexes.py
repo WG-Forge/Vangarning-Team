@@ -3,7 +3,7 @@ Contains classes to describe different hex types.
 
 """
 # pylint: disable=too-few-public-methods
-# hp is a valid snake-case name.
+# No methods needed, just dataclasses.
 # pylint: disable=missing-class-docstring
 # Classes are reasonably described by their names
 from dataclasses import dataclass

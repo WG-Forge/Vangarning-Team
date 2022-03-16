@@ -1,3 +1,7 @@
+"""
+Launches game with 3 bots.
+
+"""
 import threading
 
 from bot.step_score_bot import StepScoreBot
@@ -6,17 +10,17 @@ from game_client.server_interaction import GameSession
 from gui.game_state_property import game_state_property
 from gui.gui import WoTStrategyApp
 
-if __name__ == "__main__":
-    game_name = "VT_test"
+GAME_NAME = "VT_test1"
 
-    game_session = GameSession(name="Bot_test_1", game=game_name, num_players=3)
+if __name__ == "__main__":
+    game_session = GameSession(name="Bot_test_1", game=GAME_NAME, num_players=3)
     game_session_1 = GameSession(
         name="Bot_test_2",
-        game=game_name,
+        game=GAME_NAME,
     )
     game_session_2 = GameSession(
         name="Bot_test_3",
-        game=game_name,
+        game=GAME_NAME,
     )
 
     bot_1 = StepScoreBot(game_session.map)

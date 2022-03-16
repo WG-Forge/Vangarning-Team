@@ -14,7 +14,13 @@ from game_client.server_interaction import ActionCode
 from game_client.vehicles import Vehicle
 from utility.custom_typings import GameStateDictTyping, MapDictTyping
 
-OPTIMAL_WEIGHTS = [-0.5, -0.1, 1, 3.5, -5]
+OPTIMAL_WEIGHTS = [
+    -11.057281755495081,
+    31.319257045898585,
+    -8.514396386536838,
+    -18.00125116578524,
+    -0.6392295531874146,
+]
 
 
 # pylint: disable=too-few-public-methods
@@ -67,8 +73,7 @@ class StepScoreBot(Bot):
         actions.append(idle_action)
         # Sort by action score first, than SHOOT actions have higher priority
         actions.sort(
-            key=lambda x: (self.action_estimator(x), -x.action_code),
-            reverse=True
+            key=lambda x: (self.action_estimator(x), -x.action_code), reverse=False
         )
 
         return actions

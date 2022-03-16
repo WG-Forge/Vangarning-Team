@@ -112,7 +112,7 @@ class Vehicle:
         return 0
 
     def __str__(self):
-        return str(f"{self.player_id}, {self.__class__.__name__}")
+        return str(f"{self.__class__.__name__} {self.vehicle_id} ")
 
 
 class AtSpg(Vehicle):

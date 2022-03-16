@@ -1,3 +1,8 @@
+"""
+Test for utility.coords.Coords class.
+"""
+# pylint: disable=missing-class-docstring, missing-function-docstring, no-self-use
+# Don't think that it is really needed here
 from utility.coordinates import Coords
 
 
@@ -16,8 +21,13 @@ class TestCoords:
     #     return Coords((-1, 1, 0))
 
     def test_eq(self):
-        assert Coords((1, -1, 0)) != Coords((-1, 1, 0))
-        assert Coords((1, -1, 0)) == Coords((1, -1, 0))
+        assert Coords((1, -1, 0)) != Coords((-1, 1, 0)), (
+            "__eq__ method should return false if "
+            "two Coords objects are not equal"
+        )
+        assert Coords((1, -1, 0)) == Coords((1, -1, 0)), (
+            "__eq__ method should return true if two Coords objects are equal"
+        )
 
     def test_created_from_tuple_equals_to_created_from_dict(self):
         assert Coords((1, -2, 1)) == Coords(
@@ -39,13 +49,6 @@ class TestCoords:
         assert Coords((1, -1, 0)) + Coords((1, -1, 0)) == Coords(
             (2, -2, 0)
         ), "__add__ method must return (x1 + x2, y1 + y2, z1 + z2)"
-
-    def test_iter_yields_coords_in_right_order(self):
-        assert [i for i in Coords((1, -2, 1))] == [
-            1,
-            -2,
-            1,
-        ], "__iter__ method doesn't work right"
 
     def test_sub(self):
         assert isinstance(

@@ -63,8 +63,8 @@ class GameState:
         """
         Generates and returns object with info about hex at the given position.
 
-        :param coordinates: Coords object
-        :return: GSHex object
+        :param coordinates: coordinates of wanted hex
+        :return: GSHex object with info about hex
         """
         if self.game_map.are_valid_coords(coordinates):
             return GSHex(

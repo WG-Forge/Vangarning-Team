@@ -1,6 +1,6 @@
 """
-The only usage of this file is to make it possible to run
-a game via a terminal command
+Makes it possible to run a game through terminal.
+
 """
 import sys
 import threading
@@ -21,7 +21,11 @@ HELP_TEXT = (
 CMD_FLAGS = ["--gui"]
 
 
-def game_init(**login_info):
+def game_init(**login_info) -> GameSession:
+    """
+    Returns GameSession instance if acceptable login_info was provided.
+
+    """
     try:
         return GameSession(**login_info)
     except WrongPayloadFormatError:
@@ -29,12 +33,18 @@ def game_init(**login_info):
         sys.exit(1)
 
 
-def game_launch(bot, game, gui):
+def game_launch(bot, game, gui) -> None:
+    """
+    Launches the game.
 
+    :param bot: bot that will play the game
+    :param game: game to be played
+    :param gui: to use gui or not
+    """
     if gui:
         game_loop_thread = threading.Thread(target=game_loop, args=(bot, game))
         game_loop_thread.start()
-
+        # pylint: disable=import-outside-toplevel
         # Written here as it opens empty window if --gui was not provided
         # if imported at the top of the file
         from gui.game_state_property import game_state_property
@@ -47,7 +57,11 @@ def game_launch(bot, game, gui):
         game_loop(bot, game)
 
 
-def main():
+def main() -> None:
+    """
+    Parses terminal args and initiates game with given params.
+
+    """
     args = sys.argv.copy()
     flags_dict = {}
     for flag in CMD_FLAGS:
