@@ -2,8 +2,7 @@
 Handles graphic interface.
 
 """
-# pylint: disable=too-few-public-methods, import-error
-# pylint: disable=attribute-defined-outside-init
+# pylint: disable=W,C,R,E
 # Pylint doesn't get along with kivy
 from kivy.app import App
 from kivy.clock import Clock
