@@ -11,7 +11,7 @@ from game_client.state_hex import GSHex
 from game_client.vehicles import VEHICLE_CLASSES, Vehicle
 from utility.coordinates import Coords
 from utility.custom_typings import (CoordsDictTyping, GameStateDictTyping,
-                                    MapDictTyping)
+                                    MapDictTyping, VehicleDictTyping)
 
 
 class OutOfBoundsError(Exception):
@@ -48,19 +48,16 @@ class GameState:
 
         :param data: GAME_STATE response from the server
         """
-        if not self.players:
-            self.__populate_players_vehicles(data)
-        else:
-            self.__update_players_vehicles(data)
+        # Order matters: players must be updated/created before vehicles
+        self.__update_or_create_players(data)
+        self.__update_or_create_vehicles(data["vehicles"])
 
         self.__update_catapults(data["catapult_usage"])
 
         self.current_turn = data["current_turn"]
         self.current_player = self.players[data["current_player_idx"]]
         self.finished = data["finished"]
-        self.winner = (
-            data["winner"] if data["winner"] is None else self.players[data["winner"]]
-        )
+        self.winner = None if data["winner"] is None else self.players[data["winner"]]
 
     def get_hex(self, coordinates: Coords) -> GSHex:
         """
@@ -82,44 +79,37 @@ class GameState:
             f"for the game map with radius {self.game_map.map_radius}."
         )
 
-    def __populate_players_vehicles(self, data: GameStateDictTyping) -> None:
-        """
-        Populates information about vehicles and players.
-
-        Called only at the first call of self.update method
-        :param data: GAME_STATE response from the server
-        """
-        self.num_turns = data["num_turns"]
-
+    def __update_or_create_players(self, data: GameStateDictTyping) -> None:
         for player in data["players"]:
-            self.players[int(player["idx"])] = Player(player)
+            if player["idx"] in self.players:
+                player_obj = self.players[player["idx"]]
+                player_obj.update(
+                    data["win_points"][str(player["idx"])], data["attack_matrix"]
+                )
+            else:
+                self.players[int(player["idx"])] = Player(player)
 
-        for vid, vehicle in data["vehicles"].items():
-            vehicle_obj: Vehicle = VEHICLE_CLASSES[vehicle["vehicle_type"]](
-                int(vid), vehicle
-            )
-            self.vehicles[vehicle_obj.position] = vehicle_obj
-            self.players[vehicle_obj.player_id].add_vehicle(vehicle_obj)
-            self.spawn_points.append(vehicle_obj.spawn_position)
-
-    def __update_players_vehicles(self, data: GameStateDictTyping) -> None:
-        """
-        Calls update methods for each player and actor.
-
-        :param data: GAME_STATE response from the server
-        """
-        for idx, player in self.players.items():
-            player.update(data["win_points"][str(idx)], data["attack_matrix"])
-
-        vehicles_buffer: dict[int, Vehicle] = {}  # For the cases when there is
-        # any vehicle at the new_pos
-        for vid, vehicle in data["vehicles"].items():
+    def __update_or_create_vehicles(
+        self, vehicles_data: dict[str, VehicleDictTyping]
+    ) -> None:
+        vehicles_buffer: dict[int, Vehicle] = {}
+        for vid, vehicle in vehicles_data.items():
             new_pos = Coords(vehicle["position"])
+
             if int(vid) in vehicles_buffer:
                 vehicle_obj = vehicles_buffer[int(vid)]
             else:
-                vehicle_obj = self.__get_vehicle_by_id(int(vid))
-                self.vehicles.pop(vehicle_obj.position)
+                try:
+                    vehicle_obj = self.__get_vehicle_by_id(int(vid))
+                    self.vehicles.pop(vehicle_obj.position)
+                except KeyError:
+                    vehicle_obj = VEHICLE_CLASSES[vehicle["vehicle_type"]](
+                        int(vid), vehicle
+                    )
+                    self.vehicles[vehicle_obj.position] = vehicle_obj
+                    self.players[vehicle_obj.player_id].add_vehicle(vehicle_obj)
+                    self.spawn_points.append(vehicle_obj.spawn_position)
+                    continue
 
             vehicle_obj.update(vehicle)
             if new_pos in self.vehicles:

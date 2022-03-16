@@ -42,15 +42,13 @@ class ActionEstimator:
 
         result += self.enemy_atk_to_hp_ratio(action.actor, position)
         result += self.straight_distance_to_base(position)
-        if action.action_code == ActionCode.MOVE:
-            result += self.gained_capture_points(action.actor, action.target)
-            result += self.score_for_special_hexes(action.actor, action.target)
+        result += self.score_for_special_hexes(action.actor, position)
+        result += self.gained_capture_points(action.actor, position)
+
         if action.action_code == ActionCode.SHOOT:
-            result += self.gained_capture_points(action.actor, action.actor.position)
             result += self.estimate_targets(
                 action.actor.damage, action.affected_vehicles
             )
-            result += self.score_for_special_hexes(action.actor, action.actor.position)
 
         return result
 
@@ -83,14 +81,15 @@ class ActionEstimator:
         Calculates an amount of capture points generated.
 
         """
-        prev_pos_hex_type = type(self.game_state.get_hex(actor.position).map_hex)
-        new_pos_hex_type = type(self.game_state.get_hex(new_pos).map_hex)
-        if prev_pos_hex_type is Base and new_pos_hex_type is not Base:
-            return self.weights[2] * -actor.capture_points
-        if prev_pos_hex_type is Base and new_pos_hex_type is Base:
+        result = 0
+        prev_pos_hex = self.game_state.get_hex(actor.position).map_hex
+        new_pos_hex = self.game_state.get_hex(new_pos).map_hex
+        if isinstance(prev_pos_hex, Base) and not isinstance(new_pos_hex, Base):
+            result += -actor.capture_points
+        if isinstance(prev_pos_hex, Base) and isinstance(new_pos_hex, Base):
             if self.__get_amount_of_players_on_base() <= 2:
-                return self.weights[2] * 1
-        return 0
+                result += 1
+        return self.weights[2] * result
 
     def estimate_targets(self, damage: int, affected_vehicles: list[Vehicle]) -> float:
         """
@@ -99,14 +98,14 @@ class ActionEstimator:
         """
         result = 0
         for vehicle in affected_vehicles:
-            hp_after_shot_modifier = damage / vehicle.hp
+            # hp_after_shot_modifier = damage / vehicle.hp
             if vehicle.hp <= damage:
                 result += vehicle.max_hp
-            result += vehicle.capture_points * hp_after_shot_modifier
+            # result += vehicle.capture_points * hp_after_shot_modifier
 
         return self.weights[3] * result
 
-    def score_for_special_hexes(self, actor: Vehicle, position: Coords):
+    def score_for_special_hexes(self, actor: Vehicle, position: Coords) -> float:
         """
         Check for any bonus hexes.
 
@@ -136,7 +135,8 @@ class ActionEstimator:
     def __get_amount_of_players_on_base(self):
         result = set()
         for vehicle in self.game_state.vehicles.values():
-            if self.game_state.get_hex(vehicle.position).map_hex is Base():
+            vehicle_hex = self.game_state.get_hex(vehicle.position).map_hex
+            if isinstance(vehicle_hex, Base):
                 result.add(vehicle.player_id)
 
         return len(result)

@@ -11,8 +11,8 @@ from game_client.server_interaction import GameSession, WrongPayloadFormatError
 
 HELP_TEXT = (
     "Usage:\n"
-    "python terminal_interface.py {name}\n"
-    "python terminal_interface.py {name} {game}\n"
+    "python terminal_interface.py {username}\n"
+    "python terminal_interface.py {username} {game}\n"
     "python terminal_interface.py "
     "{username} {game} {num_turns} {num_players}\n"
     "--gui - launch the game with gui"

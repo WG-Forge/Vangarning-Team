@@ -24,6 +24,14 @@ class TestCoords:
             {"x": 1, "y": -2, "z": 1}
         ), "Instances created from tuple and dict with the same data are not equal"
 
+    def test_abs(self):
+        assert isinstance(
+            abs(Coords((-10, 4, 6))), Coords
+        ), "abs method should return Coords instance"
+        assert abs(Coords((-10, 4, 6))) == Coords(
+            (10, 4, 6)
+        ), "abs method doesn't work as intended."
+
     def test_add(self):
         assert isinstance(
             Coords((1, -1, 0)) + Coords((1, -1, 0)), Coords

@@ -1,18 +1,15 @@
 """
-Handles graphic interface
-"""
+Handles graphic interface.
 
+"""
+# pylint: disable=too-few-public-methods, import-error
+# pylint: disable=attribute-defined-outside-init
+# Pylint doesn't get along with kivy
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
-
-# pylint: disable=E0611
-from kivy.properties import (
-    ListProperty,
-    NumericProperty,
-    ObjectProperty,
-    ReferenceListProperty,
-)
+from kivy.properties import (ListProperty, NumericProperty, ObjectProperty,
+                             ReferenceListProperty)
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.effectwidget import EffectWidget
 from kivy.uix.scatter import Scatter
@@ -379,6 +376,10 @@ class WoTStrategyApp(App):
         self.game_state = {}
 
     def build(self):
+        """
+        Creates root widget of the app.
+
+        """
         root = WoTStrategyRoot()
         root.create_map(self.map_data)
 
