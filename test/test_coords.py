@@ -4,6 +4,7 @@ Test for utility.coords.Coords class.
 # pylint: disable=missing-class-docstring, missing-function-docstring, no-self-use
 # Don't think that it is really needed here
 from utility.coordinates import Coords
+from bot.mcst.mcst import MonteCarloSearchTree
 
 
 class TestCoords:
@@ -117,3 +118,11 @@ class TestCoords:
             "y": 0,
             "z": 0,
         }, "server_format must be {'x': x, 'y': y, 'z': z}"
+
+    def test_MCST(self):
+        node, game_state = MonteCarloSearchTree.search_tree.selection()
+        have_root = False
+        while node is not None:
+            have_root |= (node == MonteCarloSearchTree.search_tree.root)
+            node = node.parent
+        assert have_root
