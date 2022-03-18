@@ -25,8 +25,6 @@ def game_loop(bot, game):
     :param bot: StepScoreBot instance that will play the game
     :param game: GameSession instance
     """
-    shots = 0
-    moves = 0
     while True:
         game_state = game.game_state()
 
@@ -54,10 +52,6 @@ def game_loop(bot, game):
                 action_type = (
                     "SHOOT" if action.action_code == ActionCode.SHOOT else "MOVE"
                 )
-                if action_type == "SHOOT":
-                    shots += 1
-                else:
-                    moves += 1
                 logger.info(
                     "Action type: %s. Actor: %s. Target: %s.",
                     action_type,

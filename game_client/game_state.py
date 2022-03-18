@@ -133,7 +133,7 @@ class GameState:
         :param catapult_usages: part of GAME_STATE response
         """
         for usage in catapult_usages:
-            self.game_map[Coords(usage)].uses_left -= 1
+            self.game_map[Coords(usage)].use()
 
     def __get_vehicle_or_none(self, coords: Coords) -> Optional[Vehicle]:
         """

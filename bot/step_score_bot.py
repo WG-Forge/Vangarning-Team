@@ -73,7 +73,8 @@ class StepScoreBot(Bot):
         actions.append(idle_action)
         # Sort by action score first, than SHOOT actions have higher priority
         actions.sort(
-            key=lambda x: (self.action_estimator(x), -x.action_code), reverse=False
+            key=lambda x: (self.action_estimator(x), -x.action_code),
+            reverse=False
         )
 
         return actions
