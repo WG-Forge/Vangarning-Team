@@ -8,11 +8,18 @@ Handles graphic interface.
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
-from kivy.properties import (ListProperty, NumericProperty, ObjectProperty,
-                             ReferenceListProperty)
+from kivy.properties import (
+    ListProperty,
+    NumericProperty,
+    ObjectProperty,
+    ReferenceListProperty,
+    StringProperty,
+)
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.effectwidget import EffectWidget
+from kivy.uix.label import Label
 from kivy.uix.scatter import Scatter
+from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.widget import Widget
 
 from game_client.vehicles import VEHICLE_CLASSES
@@ -179,10 +186,12 @@ def create_hexes(map_data: dict):
     :param map_data: Map dict
     :return:
     """
-    for cube_x in range(-map_data["size"], map_data["size"] + 1):
+
+    size_without_center = map_data["size"] - 1
+    for cube_x in range(-size_without_center, size_without_center + 1):
         for cube_y in range(
-            max(-map_data["size"], -map_data["size"] - cube_x),
-            min(map_data["size"] + 1, map_data["size"] - cube_x + 1),
+            max(-size_without_center, -size_without_center - cube_x),
+            min(size_without_center + 1, size_without_center - cube_x + 1),
         ):
             cube_coords_tuple = (cube_x, cube_y, -cube_x - cube_y)
             new_hex = Hex()
@@ -233,7 +242,20 @@ class MyScatter(Scatter):
             child.hex_size = value
 
 
-class WoTStrategyRoot(EffectWidget):
+class PlayerLayout(BoxLayout):
+    player_id = NumericProperty(0)
+    player_name = StringProperty()
+    capture_points = NumericProperty(0)
+    kill_points = NumericProperty(0)
+    color = ListProperty([0, 0, 0])
+
+
+class MyLabel(Label):
+    color = ListProperty([0, 0, 0, 1])
+    back_color = ListProperty([1, 1, 1, 1])
+
+
+class GameScreenRoot(EffectWidget):
     """
     Root widget for app
     """
@@ -243,6 +265,9 @@ class WoTStrategyRoot(EffectWidget):
     not_used_colors = [COLORS["red"], COLORS["green"], COLORS["blue"]]
     ids_to_colors: dict[int, tuple[int, int, int]] = {}
     scatter = MyScatter()
+    players_layouts = {}
+    info_layout = BoxLayout()
+    turn_label = MyLabel()
     map_size = 23
     hex_size = NumericProperty(25)
 
@@ -315,6 +340,7 @@ class WoTStrategyRoot(EffectWidget):
         :param value: new hex_size value
         :return:
         """
+        # self.scatter.hex_size = value
         for child in self.children:
             child.hex_size = value
 
@@ -326,6 +352,8 @@ class WoTStrategyRoot(EffectWidget):
         """
         self.update_vehicles(game_state["vehicles"])
         self.update_special_hexes(game_state)
+        self.update_player_info(game_state)
+        self.turn_label.text = str(game_state["current_turn"])
 
     def update_vehicles(self, vehicles_data: dict):
         """
@@ -356,6 +384,81 @@ class WoTStrategyRoot(EffectWidget):
             hex_cube_coords_tuple = dict_to_tuple(hex_cube_coords)
             self.consumables[hex_cube_coords_tuple].uses += 1
 
+    def add_player_info(self, player_info: dict):
+        idx = player_info["idx"]
+
+        layout = PlayerLayout()
+        self.info_layout.add_widget(layout)
+
+        self.players_layouts[idx] = layout
+        layout.player_id = idx
+        layout.color = tuple(self.ids_to_colors[idx]) + (1,)
+        layout.player_name = player_info["name"]
+
+    def update_player_info(self, game_state: dict):
+        for id_string, win_points in game_state["win_points"].items():
+            player_idx = int(id_string)
+            if player_idx not in self.players_layouts:
+                self.add_player_info(
+                    next(
+                        player
+                        for player in game_state["players"]
+                        if player["idx"] == player_idx
+                    )
+                )
+            self.players_layouts[player_idx].capture_points = win_points["capture"]
+            self.players_layouts[player_idx].kill_points = win_points["kill"]
+
+
+class GameScreen(Screen):
+    game_screen_root = GameScreenRoot()
+
+
+class GameOverScreenRoot(Widget):
+    message_label = Label()
+
+    def set_message(self, game_state):
+        if game_state["winner"] is None:
+            self.message_label.text = "DRAW"
+        elif isinstance(game_state["winner"], int):
+            self.message_label.text = (
+                next(
+                    player["name"]
+                    for player in game_state["players"]
+                    if player["idx"] == game_state["winner"]
+                )
+                + " HAS WON"
+            )
+        else:
+            draw_player_1 = next(
+                player["name"]
+                for player in game_state["players"]
+                if player["idx"] == game_state["winner"][0]
+            )
+            draw_player_2 = next(
+                player["name"]
+                for player in game_state["players"]
+                if player["idx"] == game_state["winner"][1]
+            )
+            lose_player = next(
+                player["name"]
+                for player in game_state["players"]
+                if player["is_observer"] is False
+            )
+            self.message_label.text = (
+                "DRAW BETWEEN "
+                + draw_player_1
+                + " AND "
+                + draw_player_2
+                + ". PLAYER "
+                + lose_player
+                + " LOST"
+            )
+
+
+class GameOverScreen(Screen):
+    game_over_screen_root = GameOverScreenRoot()
+
 
 class WoTStrategyApp(App):
     """
@@ -373,22 +476,41 @@ class WoTStrategyApp(App):
         super().__init__()
         self.map_data = map_data
         self.game_state_property = game_state_property
-        self.game_state = {}
+
+    def update_screen(self, game_state):
+        if game_state["finished"]:
+            sm: ScreenManager = self.root
+            game_over_screen: GameOverScreen = sm.get_screen(name="game over")
+            game_over_screen.game_over_screen_root.set_message(game_state)
+            sm.current = "game over"
 
     def build(self):
         """
         Creates root widget of the app.
 
         """
-        root = WoTStrategyRoot()
-        root.create_map(self.map_data)
+        sm = ScreenManager()
 
-        Window.bind(on_resize=root.size_setter)
+        game_screen = GameScreen(name="game")
+        game_screen.game_screen_root.create_map(self.map_data)
+
+        Window.bind(on_resize=game_screen.game_screen_root.size_setter)
         Window.dispatch("on_resize", Window.width, Window.height)
 
         self.game_state_property.bind(
             lambda game_state: Clock.schedule_once(
-                lambda dt: self.root.update(game_state), 0
+                lambda dt: game_screen.game_screen_root.update(game_state), 0
             )
         )
-        return root
+
+        sm.add_widget(game_screen)
+
+        game_over_screen = GameOverScreen(name="game over")
+        self.game_state_property.bind(
+            lambda game_state: Clock.schedule_once(
+                lambda dt: self.update_screen(game_state), 0
+            )
+        )
+
+        sm.add_widget(game_over_screen)
+        return sm
