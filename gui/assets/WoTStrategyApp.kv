@@ -99,9 +99,107 @@
 <MyScatter>:
     hex_size: 25
 
-<WoTStrategyRoot>:
+<MyLabel>:
+    color: 0,0,0, 1
+    back_color: self.parent.back_color
+    halign: 'center'
+    size_hint: 1, 1
+    text_size: self.width, None
+    shorten: True
+    padding_y: 30
+    canvas.before:
+        Color:
+            rgba: self.back_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<PlayerLayout>:
+    orientation: 'horizontal'
+    spacing: 5
+    color: 1, 1, 1, 1
+    player_id: 0
+    player_name: ""
+    capture_points: 0
+    kill_points: 0
+    back_color: 0.5,0.5,0.5,1
+    MyLabel:
+        text: str(self.parent.player_id)
+        size_hint_x: 0.1
+        color: self.parent.color
+        back_color: self.back_color
+    MyLabel:
+        text: self.parent.player_name
+        size_hint_x: 0.4
+        color: self.parent.color
+        back_color: self.back_color
+    MyLabel:
+        text: str(self.parent.capture_points)
+        size_hint_x: 0.25
+        color: self.parent.color
+        back_color: self.back_color
+    MyLabel:
+        text: str(self.parent.kill_points)
+        size_hint_x: 0.25
+        color: self.parent.color
+        back_color: self.back_color
+
+<GameScreenRoot>:
     hex_size: 25
     scatter: scatter_id
     effects: ew.FXAAEffect(),
+    info_layout: layout
+    turn_label: turn_label_id
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: 10
+        id: layout
+        size_hint: 0.3, 0.2
+        back_color: 1,1,1,1
+        MyLabel:
+            size_hint_x: 0.1
+            id: turn_label_id
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: 5
+            back_color: 1,1,1,1
+            MyLabel:
+                text: 'ID'
+                size_hint_x: 0.1
+            MyLabel:
+                text: 'Player'
+                size_hint_x: 0.4
+            MyLabel:
+                text: 'Capture'
+                size_hint_x: 0.25
+            MyLabel:
+                text: 'Kill'
+                size_hint_x: 0.25
     MyScatter:
         id: scatter_id
+
+<GameOverScreenRoot>:
+    message_label: message_label_id
+    Label:
+        text: "sample_text"
+        id: message_label_id
+        color: 1,1,1,1
+        center: self.parent.center_x, self.parent.center_y + (self.parent.height / 5)
+        valign: 'center'
+    Button:
+        text: 'OK'
+        id: button_id
+        center: self.parent.center_x, self.parent.center_y - (self.parent.height / 5)
+        size_hint: 0.2, 0.1
+        on_press: app.stop()
+
+
+<GameScreen>:
+    game_screen_root: game_screen_id
+    GameScreenRoot:
+        id: game_screen_id
+
+<GameOverScreen>:
+    game_over_screen_root: game_over_screen_id
+    GameOverScreenRoot:
+        id: game_over_screen_id
