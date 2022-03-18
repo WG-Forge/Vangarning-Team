@@ -15,11 +15,11 @@ from game_client.vehicles import Vehicle
 from utility.custom_typings import GameStateDictTyping, MapDictTyping
 
 OPTIMAL_WEIGHTS = [
-    -11.057281755495081,
-    31.319257045898585,
-    -8.514396386536838,
-    -18.00125116578524,
-    -0.6392295531874146,
+    -12.072961908374216,
+    24.955705267830027,
+    -27.0452067801114,
+    -40.57683838098488,
+    1.6489629379993986,
 ]
 
 
