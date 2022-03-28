@@ -28,3 +28,10 @@ class Action:
         Returns action in server format: ActionCode + actor id + target hex.
         """
         return self.action_code, self.actor.vehicle_id, self.target.server_format
+
+    def __ne__(self, other):
+        return (
+            self.action_code != other.action_code
+            or self.actor != other.actor
+            or self.target != other.target
+        )

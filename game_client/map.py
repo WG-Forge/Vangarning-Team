@@ -18,6 +18,9 @@ class GameMap:
     """
     Contains static information about game map.
 
+    Keep all the map's content in self.content dictionary
+    with coordinates as keys.
+    Supports accessing content with self[key] syntax.
     """
 
     def __init__(self, game_map: MapDictTyping):

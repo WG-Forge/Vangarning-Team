@@ -1,4 +1,10 @@
+"""
+Test for utility.coords.Coords class.
+"""
+# pylint: disable=missing-class-docstring, missing-function-docstring, no-self-use
+# Don't think that it is really needed here
 from utility.coordinates import Coords
+from bot.mcst.mcst import MonteCarloSearchTree
 
 
 class TestCoords:
@@ -16,13 +22,26 @@ class TestCoords:
     #     return Coords((-1, 1, 0))
 
     def test_eq(self):
-        assert Coords((1, -1, 0)) != Coords((-1, 1, 0))
-        assert Coords((1, -1, 0)) == Coords((1, -1, 0))
+        assert Coords((1, -1, 0)) != Coords((-1, 1, 0)), (
+            "__eq__ method should return false if "
+            "two Coords objects are not equal"
+        )
+        assert Coords((1, -1, 0)) == Coords((1, -1, 0)), (
+            "__eq__ method should return true if two Coords objects are equal"
+        )
 
     def test_created_from_tuple_equals_to_created_from_dict(self):
         assert Coords((1, -2, 1)) == Coords(
             {"x": 1, "y": -2, "z": 1}
         ), "Instances created from tuple and dict with the same data are not equal"
+
+    def test_abs(self):
+        assert isinstance(
+            abs(Coords((-10, 4, 6))), Coords
+        ), "abs method should return Coords instance"
+        assert abs(Coords((-10, 4, 6))) == Coords(
+            (10, 4, 6)
+        ), "abs method doesn't work as intended."
 
     def test_add(self):
         assert isinstance(
@@ -31,13 +50,6 @@ class TestCoords:
         assert Coords((1, -1, 0)) + Coords((1, -1, 0)) == Coords(
             (2, -2, 0)
         ), "__add__ method must return (x1 + x2, y1 + y2, z1 + z2)"
-
-    def test_iter_yields_coords_in_right_order(self):
-        assert [i for i in Coords((1, -2, 1))] == [
-            1,
-            -2,
-            1,
-        ], "__iter__ method doesn't work right"
 
     def test_sub(self):
         assert isinstance(

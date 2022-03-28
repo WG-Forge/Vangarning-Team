@@ -9,6 +9,7 @@ class GameStateProperty:
     """
     Class with game state property. Used to update gui when game state is changed.
     """
+
     def __init__(self):
         self.callbacks = []
         self.lock = Lock()
